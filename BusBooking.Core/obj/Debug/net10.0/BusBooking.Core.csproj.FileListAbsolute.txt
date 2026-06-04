@@ -1,0 +1,12 @@
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Core\bin\Debug\net10.0\BusBooking.Core.deps.json
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Core\bin\Debug\net10.0\BusBooking.Core.dll
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Core\bin\Debug\net10.0\BusBooking.Core.pdb
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Core\obj\Debug\net10.0\BusBooking.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Core\obj\Debug\net10.0\BusBooking.Core.AssemblyInfoInputs.cache
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Core\obj\Debug\net10.0\BusBooking.Core.AssemblyInfo.cs
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Core\obj\Debug\net10.0\BusBooking.Core.csproj.CoreCompileInputs.cache
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Core\obj\Debug\net10.0\BusBooking.Core.sourcelink.json
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Core\obj\Debug\net10.0\BusBooking.Core.dll
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Core\obj\Debug\net10.0\refint\BusBooking.Core.dll
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Core\obj\Debug\net10.0\BusBooking.Core.pdb
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Core\obj\Debug\net10.0\ref\BusBooking.Core.dll
