@@ -1,8 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "plFmYevpM4E=",
+  "dgSpecHash": "t1UVb57U310=",
   "success": true,
   "projectFilePath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Services\\BusBooking.Services.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\regi4\\.nuget\\packages\\isopoh.cryptography.argon2\\2.0.0\\isopoh.cryptography.argon2.2.0.0.nupkg.sha512",
+    "C:\\Users\\regi4\\.nuget\\packages\\isopoh.cryptography.blake2b\\2.0.0\\isopoh.cryptography.blake2b.2.0.0.nupkg.sha512",
+    "C:\\Users\\regi4\\.nuget\\packages\\isopoh.cryptography.securearray\\2.0.0\\isopoh.cryptography.securearray.2.0.0.nupkg.sha512"
+  ],
   "logs": []
 }

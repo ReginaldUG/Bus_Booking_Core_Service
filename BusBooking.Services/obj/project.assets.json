@@ -1,11 +1,161 @@
 {
   "version": 4,
   "targets": {
-    "net10.0": {}
+    "net10.0": {
+      "Isopoh.Cryptography.Argon2/2.0.0": {
+        "type": "package",
+        "dependencies": {
+          "Isopoh.Cryptography.Blake2b": "2.0.0",
+          "Isopoh.Cryptography.SecureArray": "2.0.0"
+        },
+        "compile": {
+          "lib/net7.0/Isopoh.Cryptography.Argon2.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net7.0/Isopoh.Cryptography.Argon2.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Isopoh.Cryptography.Blake2b/2.0.0": {
+        "type": "package",
+        "dependencies": {
+          "Isopoh.Cryptography.SecureArray": "2.0.0"
+        },
+        "compile": {
+          "lib/net7.0/Isopoh.Cryptography.Blake2b.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net7.0/Isopoh.Cryptography.Blake2b.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Isopoh.Cryptography.SecureArray/2.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net7.0/Isopoh.Cryptography.SecureArray.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net7.0/Isopoh.Cryptography.SecureArray.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "BusBooking.Core/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "compile": {
+          "bin/placeholder/BusBooking.Core.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/BusBooking.Core.dll": {}
+        }
+      },
+      "BusBooking.Models/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "BusBooking.Core": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/BusBooking.Models.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/BusBooking.Models.dll": {}
+        }
+      }
+    }
   },
-  "libraries": {},
+  "libraries": {
+    "Isopoh.Cryptography.Argon2/2.0.0": {
+      "sha512": "8ytWN19j+qARb/XYi7KkNMm4Z8zS6tfGgnsZ1N5ihbQ5LXfyL+uYowfJxtGW9TO0S8NM2q0BaTKGOtOlsrhclQ==",
+      "type": "package",
+      "path": "isopoh.cryptography.argon2/2.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "README.md",
+        "isopoh.cryptography.argon2.2.0.0.nupkg.sha512",
+        "isopoh.cryptography.argon2.nuspec",
+        "isopoh.png",
+        "lib/net6.0/Isopoh.Cryptography.Argon2.dll",
+        "lib/net6.0/Isopoh.Cryptography.Argon2.xml",
+        "lib/net7.0/Isopoh.Cryptography.Argon2.dll",
+        "lib/net7.0/Isopoh.Cryptography.Argon2.xml",
+        "lib/netcoreapp3.1/Isopoh.Cryptography.Argon2.dll",
+        "lib/netcoreapp3.1/Isopoh.Cryptography.Argon2.xml",
+        "lib/netstandard2.0/Isopoh.Cryptography.Argon2.dll",
+        "lib/netstandard2.0/Isopoh.Cryptography.Argon2.xml"
+      ]
+    },
+    "Isopoh.Cryptography.Blake2b/2.0.0": {
+      "sha512": "Co56bjSZV13fpvYHEN04qG8hqc0rKRm4os8iEgpJ/kujvt0pYtOVhj5J0Q7HBPbHwpcChRh2CjYVCGm4nw85VQ==",
+      "type": "package",
+      "path": "isopoh.cryptography.blake2b/2.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "README.md",
+        "isopoh.cryptography.blake2b.2.0.0.nupkg.sha512",
+        "isopoh.cryptography.blake2b.nuspec",
+        "isopoh.png",
+        "lib/net6.0/Isopoh.Cryptography.Blake2b.dll",
+        "lib/net6.0/Isopoh.Cryptography.Blake2b.xml",
+        "lib/net7.0/Isopoh.Cryptography.Blake2b.dll",
+        "lib/net7.0/Isopoh.Cryptography.Blake2b.xml",
+        "lib/netcoreapp3.1/Isopoh.Cryptography.Blake2b.dll",
+        "lib/netcoreapp3.1/Isopoh.Cryptography.Blake2b.xml",
+        "lib/netstandard2.0/Isopoh.Cryptography.Blake2b.dll",
+        "lib/netstandard2.0/Isopoh.Cryptography.Blake2b.xml"
+      ]
+    },
+    "Isopoh.Cryptography.SecureArray/2.0.0": {
+      "sha512": "oWbRv/BTztKJxKFr3FBurWBBCgE1+nUTm3pwtA3Yg7Xeo4wDpaLstAwqx8HeQG3/b9yOs2qykpqfbNPJ40McIw==",
+      "type": "package",
+      "path": "isopoh.cryptography.securearray/2.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "README.md",
+        "isopoh.cryptography.securearray.2.0.0.nupkg.sha512",
+        "isopoh.cryptography.securearray.nuspec",
+        "isopoh.png",
+        "lib/net6.0/Isopoh.Cryptography.SecureArray.dll",
+        "lib/net6.0/Isopoh.Cryptography.SecureArray.xml",
+        "lib/net7.0/Isopoh.Cryptography.SecureArray.dll",
+        "lib/net7.0/Isopoh.Cryptography.SecureArray.xml",
+        "lib/netcoreapp3.1/Isopoh.Cryptography.SecureArray.dll",
+        "lib/netcoreapp3.1/Isopoh.Cryptography.SecureArray.xml",
+        "lib/netstandard2.0/Isopoh.Cryptography.SecureArray.dll",
+        "lib/netstandard2.0/Isopoh.Cryptography.SecureArray.xml"
+      ]
+    },
+    "BusBooking.Core/1.0.0": {
+      "type": "project",
+      "path": "../BusBooking.Core/BusBooking.Core.csproj",
+      "msbuildProject": "../BusBooking.Core/BusBooking.Core.csproj"
+    },
+    "BusBooking.Models/1.0.0": {
+      "type": "project",
+      "path": "../BusBooking.Models/BusBooking.Models.csproj",
+      "msbuildProject": "../BusBooking.Models/BusBooking.Models.csproj"
+    }
+  },
   "projectFileDependencyGroups": {
-    "net10.0": []
+    "net10.0": [
+      "BusBooking.Models >= 1.0.0",
+      "Isopoh.Cryptography.Argon2 >= 2.0.0"
+    ]
   },
   "packageFolders": {
     "C:\\Users\\regi4\\.nuget\\packages\\": {},
@@ -39,7 +189,11 @@
         "net10.0": {
           "framework": "net10.0",
           "targetAlias": "net10.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Models\\BusBooking.Models.csproj": {
+              "projectPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Models\\BusBooking.Models.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
@@ -58,6 +212,12 @@
       "net10.0": {
         "framework": "net10.0",
         "targetAlias": "net10.0",
+        "dependencies": {
+          "Isopoh.Cryptography.Argon2": {
+            "target": "Package",
+            "version": "[2.0.0, )"
+          }
+        },
         "imports": [
           "net461",
           "net462",

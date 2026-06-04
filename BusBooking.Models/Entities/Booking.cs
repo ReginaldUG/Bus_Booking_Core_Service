@@ -1,5 +1,11 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using BusBooking.Core.Attributes;
+
 namespace BusBooking.Models.Entities
 {
+    [Table("Bookings")]
+    [ReadTableName("Bookings")]
+    [WriteTableName("Bookings")]
     public class Booking
     {
         public int Id { get; set; }
