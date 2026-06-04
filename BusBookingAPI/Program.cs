@@ -1,4 +1,7 @@
 using BusBooking.Data;
+using BusBooking.Data.Executers;
+using BusBooking.Data.Helpers;
+using BusBooking.Data.Queries;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +13,13 @@ builder.Services.AddDbContext<AppDbContext>(options=>
         builder.Configuration.GetConnectionString("DefaultConnection"),
         b=>b.MigrationsAssembly("BusBooking.Migrations")
     ));
+
+builder.Services.AddScoped<ReadExecuter>();
+builder.Services.AddScoped<ReadUtilities>();
+builder.Services.AddScoped<WriteUtilities>();
+
+// Registers the open generic QueryRepository for any class entity used
+builder.Services.AddScoped(typeof(QueryRepository<>));
 
 var app = builder.Build();
 
