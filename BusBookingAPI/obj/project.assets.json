@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 3,
   "targets": {
     "net10.0": {
       "Dapper/2.1.79": {
@@ -15,6 +15,18 @@
           }
         }
       },
+      "DotNetEnv/3.2.0": {
+        "type": "package",
+        "dependencies": {
+          "Superpower": "3.0.0"
+        },
+        "compile": {
+          "lib/netstandard2.0/DotNetEnv.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/DotNetEnv.dll": {}
+        }
+      },
       "Humanizer.Core/2.14.1": {
         "type": "package",
         "compile": {
@@ -24,6 +36,52 @@
         },
         "runtime": {
           "lib/net6.0/Humanizer.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Isopoh.Cryptography.Argon2/2.0.0": {
+        "type": "package",
+        "dependencies": {
+          "Isopoh.Cryptography.Blake2b": "2.0.0",
+          "Isopoh.Cryptography.SecureArray": "2.0.0"
+        },
+        "compile": {
+          "lib/net7.0/Isopoh.Cryptography.Argon2.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net7.0/Isopoh.Cryptography.Argon2.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Isopoh.Cryptography.Blake2b/2.0.0": {
+        "type": "package",
+        "dependencies": {
+          "Isopoh.Cryptography.SecureArray": "2.0.0"
+        },
+        "compile": {
+          "lib/net7.0/Isopoh.Cryptography.Blake2b.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net7.0/Isopoh.Cryptography.Blake2b.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Isopoh.Cryptography.SecureArray/2.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net7.0/Isopoh.Cryptography.SecureArray.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net7.0/Isopoh.Cryptography.SecureArray.dll": {
             "related": ".xml"
           }
         }
@@ -556,6 +614,19 @@
           }
         }
       },
+      "Superpower/3.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net5.0/Superpower.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net5.0/Superpower.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "System.CodeDom/6.0.0": {
         "type": "package",
         "compile": {
@@ -735,6 +806,21 @@
         "runtime": {
           "bin/placeholder/BusBooking.Models.dll": {}
         }
+      },
+      "BusBooking.Services/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "BusBooking.Data": "1.0.0",
+          "BusBooking.Models": "1.0.0",
+          "Isopoh.Cryptography.Argon2": "2.0.0"
+        },
+        "compile": {
+          "bin/placeholder/BusBooking.Services.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/BusBooking.Services.dll": {}
+        }
       }
     }
   },
@@ -760,6 +846,20 @@
         "readme.md"
       ]
     },
+    "DotNetEnv/3.2.0": {
+      "sha512": "2q+PD+aJcRW9QuRcIv4F8WbvEDxI6cwxzZJec2i45cBY4cAKCAoW4ZPkApJ7H82wr6Yfmxx/0kb1nLnRmZrGZA==",
+      "type": "package",
+      "path": "dotnetenv/3.2.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "README.md",
+        "dotnetenv.3.2.0.nupkg.sha512",
+        "dotnetenv.nuspec",
+        "lib/netstandard2.0/DotNetEnv.dll"
+      ]
+    },
     "Humanizer.Core/2.14.1": {
       "sha512": "lQKvtaTDOXnoVJ20ibTuSIOf2i0uO0MPbDhd1jm238I+U/2ZnRENj0cktKZhtchBMtCUSRQ5v4xBCUbKNmyVMw==",
       "type": "package",
@@ -776,6 +876,72 @@
         "lib/netstandard2.0/Humanizer.dll",
         "lib/netstandard2.0/Humanizer.xml",
         "logo.png"
+      ]
+    },
+    "Isopoh.Cryptography.Argon2/2.0.0": {
+      "sha512": "8ytWN19j+qARb/XYi7KkNMm4Z8zS6tfGgnsZ1N5ihbQ5LXfyL+uYowfJxtGW9TO0S8NM2q0BaTKGOtOlsrhclQ==",
+      "type": "package",
+      "path": "isopoh.cryptography.argon2/2.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "README.md",
+        "isopoh.cryptography.argon2.2.0.0.nupkg.sha512",
+        "isopoh.cryptography.argon2.nuspec",
+        "isopoh.png",
+        "lib/net6.0/Isopoh.Cryptography.Argon2.dll",
+        "lib/net6.0/Isopoh.Cryptography.Argon2.xml",
+        "lib/net7.0/Isopoh.Cryptography.Argon2.dll",
+        "lib/net7.0/Isopoh.Cryptography.Argon2.xml",
+        "lib/netcoreapp3.1/Isopoh.Cryptography.Argon2.dll",
+        "lib/netcoreapp3.1/Isopoh.Cryptography.Argon2.xml",
+        "lib/netstandard2.0/Isopoh.Cryptography.Argon2.dll",
+        "lib/netstandard2.0/Isopoh.Cryptography.Argon2.xml"
+      ]
+    },
+    "Isopoh.Cryptography.Blake2b/2.0.0": {
+      "sha512": "Co56bjSZV13fpvYHEN04qG8hqc0rKRm4os8iEgpJ/kujvt0pYtOVhj5J0Q7HBPbHwpcChRh2CjYVCGm4nw85VQ==",
+      "type": "package",
+      "path": "isopoh.cryptography.blake2b/2.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "README.md",
+        "isopoh.cryptography.blake2b.2.0.0.nupkg.sha512",
+        "isopoh.cryptography.blake2b.nuspec",
+        "isopoh.png",
+        "lib/net6.0/Isopoh.Cryptography.Blake2b.dll",
+        "lib/net6.0/Isopoh.Cryptography.Blake2b.xml",
+        "lib/net7.0/Isopoh.Cryptography.Blake2b.dll",
+        "lib/net7.0/Isopoh.Cryptography.Blake2b.xml",
+        "lib/netcoreapp3.1/Isopoh.Cryptography.Blake2b.dll",
+        "lib/netcoreapp3.1/Isopoh.Cryptography.Blake2b.xml",
+        "lib/netstandard2.0/Isopoh.Cryptography.Blake2b.dll",
+        "lib/netstandard2.0/Isopoh.Cryptography.Blake2b.xml"
+      ]
+    },
+    "Isopoh.Cryptography.SecureArray/2.0.0": {
+      "sha512": "oWbRv/BTztKJxKFr3FBurWBBCgE1+nUTm3pwtA3Yg7Xeo4wDpaLstAwqx8HeQG3/b9yOs2qykpqfbNPJ40McIw==",
+      "type": "package",
+      "path": "isopoh.cryptography.securearray/2.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "README.md",
+        "isopoh.cryptography.securearray.2.0.0.nupkg.sha512",
+        "isopoh.cryptography.securearray.nuspec",
+        "isopoh.png",
+        "lib/net6.0/Isopoh.Cryptography.SecureArray.dll",
+        "lib/net6.0/Isopoh.Cryptography.SecureArray.xml",
+        "lib/net7.0/Isopoh.Cryptography.SecureArray.dll",
+        "lib/net7.0/Isopoh.Cryptography.SecureArray.xml",
+        "lib/netcoreapp3.1/Isopoh.Cryptography.SecureArray.dll",
+        "lib/netcoreapp3.1/Isopoh.Cryptography.SecureArray.xml",
+        "lib/netstandard2.0/Isopoh.Cryptography.SecureArray.dll",
+        "lib/netstandard2.0/Isopoh.Cryptography.SecureArray.xml"
       ]
     },
     "Microsoft.AspNetCore.OpenApi/10.0.8": {
@@ -2099,6 +2265,22 @@
         "postgresql.png"
       ]
     },
+    "Superpower/3.0.0": {
+      "sha512": "bjKbAYWePooCAvPxQq+3KnmcLfRggMyRoXmtBMlmCG71bdwBHrO6rmRJ2DRIodg5aztNcxeZXBUVWT+H+MZUhw==",
+      "type": "package",
+      "path": "superpower/3.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Superpower-White-400px.png",
+        "lib/net5.0/Superpower.dll",
+        "lib/net5.0/Superpower.xml",
+        "lib/netstandard2.0/Superpower.dll",
+        "lib/netstandard2.0/Superpower.xml",
+        "superpower.3.0.0.nupkg.sha512",
+        "superpower.nuspec"
+      ]
+    },
     "System.CodeDom/6.0.0": {
       "sha512": "CPc6tWO1LAer3IzfZufDBRL+UZQcj5uS207NHALQzP84Vp/z6wF0Aa0YZImOQY8iStY0A2zI/e3ihKNPfUm8XA==",
       "type": "package",
@@ -2304,6 +2486,11 @@
       "type": "project",
       "path": "../BusBooking.Models/BusBooking.Models.csproj",
       "msbuildProject": "../BusBooking.Models/BusBooking.Models.csproj"
+    },
+    "BusBooking.Services/1.0.0": {
+      "type": "project",
+      "path": "../BusBooking.Services/BusBooking.Services.csproj",
+      "msbuildProject": "../BusBooking.Services/BusBooking.Services.csproj"
     }
   },
   "projectFileDependencyGroups": {
@@ -2311,6 +2498,8 @@
       "BusBooking.Data >= 1.0.0",
       "BusBooking.Migrations >= 1.0.0",
       "BusBooking.Models >= 1.0.0",
+      "BusBooking.Services >= 1.0.0",
+      "DotNetEnv >= 3.2.0",
       "Microsoft.AspNetCore.OpenApi >= 10.0.8",
       "Microsoft.EntityFrameworkCore >= 10.0.8",
       "Microsoft.EntityFrameworkCore.Design >= 10.0.8"
@@ -2323,11 +2512,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBookingAPI\\BusBookingAPI.csproj",
+      "projectUniqueName": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBookingAPI\\BusBookingAPI.csproj",
       "projectName": "BusBookingAPI",
-      "projectPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBookingAPI\\BusBookingAPI.csproj",
+      "projectPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBookingAPI\\BusBookingAPI.csproj",
       "packagesPath": "C:\\Users\\regi4\\.nuget\\packages\\",
-      "outputPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBookingAPI\\obj\\",
+      "outputPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBookingAPI\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -2346,17 +2535,19 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj": {
-              "projectPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj"
+            "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj": {
+              "projectPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj"
             },
-            "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Migrations\\BusBooking.Migrations.csproj": {
-              "projectPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Migrations\\BusBooking.Migrations.csproj"
+            "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Migrations\\BusBooking.Migrations.csproj": {
+              "projectPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Migrations\\BusBooking.Migrations.csproj"
             },
-            "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Models\\BusBooking.Models.csproj": {
-              "projectPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Models\\BusBooking.Models.csproj"
+            "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Models\\BusBooking.Models.csproj": {
+              "projectPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Models\\BusBooking.Models.csproj"
+            },
+            "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Services\\BusBooking.Services.csproj": {
+              "projectPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Services\\BusBooking.Services.csproj"
             }
           }
         }
@@ -2375,9 +2566,12 @@
     },
     "frameworks": {
       "net10.0": {
-        "framework": "net10.0",
         "targetAlias": "net10.0",
         "dependencies": {
+          "DotNetEnv": {
+            "target": "Package",
+            "version": "[3.2.0, )"
+          },
           "Microsoft.AspNetCore.OpenApi": {
             "target": "Package",
             "version": "[10.0.8, )"

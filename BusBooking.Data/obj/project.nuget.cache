@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "eOiq0gQ0rd4=",
+  "dgSpecHash": "/OAzRH77VTw=",
   "success": true,
-  "projectFilePath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj",
+  "projectFilePath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\regi4\\.nuget\\packages\\dapper\\2.1.79\\dapper.2.1.79.nupkg.sha512",
     "C:\\Users\\regi4\\.nuget\\packages\\microsoft.entityframeworkcore\\10.0.4\\microsoft.entityframeworkcore.10.0.4.nupkg.sha512",

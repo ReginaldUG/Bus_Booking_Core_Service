@@ -18,6 +18,12 @@ namespace BusBooking.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            //ENUM MAPPING CONVERSION
+            modelBuilder.Entity<Customer>().Property(c => c.Status).HasConversion<string>();
+            modelBuilder.Entity<Driver>().Property(d => d.Status).HasConversion<string>();
+            modelBuilder.Entity<Route>().Property(r => r.Type).HasConversion<string>();
+            modelBuilder.Entity<CustomerWalletTransactions>().Property(t => t.Type).HasConversion<string>();
+            
             //RELATIONSHIPS
             modelBuilder.Entity<Driver>()
                 .HasOne(d => d.Bus)
@@ -61,7 +67,6 @@ namespace BusBooking.Data
                 .HasForeignKey(b=>b.RouteId)
                 .OnDelete(DeleteBehavior.Restrict);
             
-
             //INDEXES
             modelBuilder.Entity<Customer>()
                 .HasIndex(c => c.Email)
@@ -83,6 +88,27 @@ namespace BusBooking.Data
                 .HasIndex(b => b.RouteId)
                 .IsUnique();
             
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
+        {
+            var entries = ChangeTracker.Entries()
+                .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
+
+            foreach (var entityEntry in entries)
+            {
+                if(entityEntry.Property("UpdatedAt").CurrentValue != null)
+                {
+                    entityEntry.Property("UpdatedAt").CurrentValue = DateTime.UtcNow;
+                }
+
+                if(entityEntry.State == EntityState.Added)
+                {
+                    entityEntry.Property("CreatedAt").CurrentValue = DateTime.UtcNow;
+                }
+            }
+
+            return base.SaveChangesAsync(cancellationToken);
         }
     }
 }

@@ -104,7 +104,7 @@ namespace BusBooking.Migrations.Migrations
                     CustomerWalletId = table.Column<int>(type: "integer", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
-                    Narration = table.Column<string>(type: "text", nullable: false),
+                    Narration = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>

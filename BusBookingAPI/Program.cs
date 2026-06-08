@@ -4,6 +4,8 @@ using BusBooking.Data.Helpers;
 using BusBooking.Data.Queries;
 using Microsoft.EntityFrameworkCore;
 
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();

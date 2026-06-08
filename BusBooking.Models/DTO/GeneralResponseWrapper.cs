@@ -1,3 +1,5 @@
+using BusBooking.Core.Constants;
+
 namespace BusBooking.Models.DTO
 {
     public class ApiResponse
@@ -31,13 +33,13 @@ namespace BusBooking.Models.DTO
         public T Data { get; set; }
         public string StatusCode { get; set; }
 
-        public static ApiResponse<T> Success(string message, string statusCode, T data)
+        public static ApiResponse<T> Success(string message, T data)
         {
             return new ApiResponse<T>
             {
                 Status = true,
                 Message = message,
-                StatusCode = statusCode,
+                StatusCode = StatusCodes.Success,
                 Data = data
             };
         }
