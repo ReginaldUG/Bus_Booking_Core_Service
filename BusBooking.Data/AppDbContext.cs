@@ -17,12 +17,6 @@ namespace BusBooking.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            //ENUM MAPPING CONVERSION
-            modelBuilder.Entity<Customer>().Property(c => c.Status).HasConversion<string>();
-            modelBuilder.Entity<Driver>().Property(d => d.Status).HasConversion<string>();
-            modelBuilder.Entity<Route>().Property(r => r.Type).HasConversion<string>();
-            modelBuilder.Entity<CustomerWalletTransactions>().Property(t => t.Type).HasConversion<string>();
             
             //RELATIONSHIPS
             modelBuilder.Entity<Driver>()

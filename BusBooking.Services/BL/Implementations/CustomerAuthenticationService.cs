@@ -1,25 +1,32 @@
 
 using BusBooking.Core.Constants;
 using BusBooking.Data;
-using BusBooking.Data.Queries;
+using BusBooking.Data.Commands.Interfaces;
+using BusBooking.Data.Queries.Interfaces;
 using BusBooking.Models.DTO;
 using BusBooking.Models.DTO.RequestDTOs;
 using BusBooking.Models.DTO.ResponseDTOs;
 using BusBooking.Models.Entities;
+using BusBooking.Services.BL.Interfaces;
 using BusBookingAPI.Helpers;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace BusBooking.Services.BL.Implementations;
 
-public class CustomerAuthenticationService
+public class CustomerAuthenticationService : ICustomerAuthenticationService
 {
     private readonly AppDbContext _db;
-    private readonly QueryRepository<Customer> _customerQueryRepository;
+    private readonly IQueryRepository<Customer> _customerQueryRepository;
+    private readonly ICommandRepository<Customer> _customerCommandRepository;
+    private readonly ICommandRepository<CustomerWallet> _walletCommandRepository;
     private readonly AuthenticationHelper _authenticationHelper;
 
-    public CustomerAuthenticationService(AppDbContext db, QueryRepository<Customer> customerQueryRespository, AuthenticationHelper authenticationHelper)
+    public CustomerAuthenticationService(AppDbContext db, IQueryRepository<Customer> customerQueryRespository, ICommandRepository<Customer> customerCommandRepository, ICommandRepository<CustomerWallet> walletCommandRepository, AuthenticationHelper authenticationHelper)
     {
         _db = db;
         _customerQueryRepository = customerQueryRespository;
+        _customerCommandRepository = customerCommandRepository;
+        _walletCommandRepository = walletCommandRepository;
 
         _authenticationHelper = authenticationHelper;
     }
@@ -55,36 +62,50 @@ public class CustomerAuthenticationService
             //HashPassword
             var hashedPassword = _authenticationHelper.HashPassword(registerRequest.Password).Data;
 
-            //PASS VALUES            
-            var customer = new Customer
+            var transaction = _customerCommandRepository.BeginTransaction();
+            try
             {
-                FirstName = registerRequest.FirstName,
-                LastName = registerRequest.LastName,
-                Age = registerRequest.Age,
-                Email = registerRequest.Email,
-                HashedPassword = hashedPassword,
-                Status = AccountStatus.Active,
-
-                Wallet = new CustomerWallet
+                //PASS VALUES            
+                var customer = new Customer
                 {
+                    FirstName = registerRequest.FirstName,
+                    LastName = registerRequest.LastName,
+                    Age = registerRequest.Age,
+                    Email = registerRequest.Email,
+                    HashedPassword = hashedPassword,
+                    Status = AccountStatus.Active
+                };
+
+                // save and get the new customer ID
+                int newcustomerID = _customerCommandRepository.AddWithOpenDBTransaction(customer, transaction).Id;
+
+                var wallet = new CustomerWallet
+                {
+                    CustomerId = newcustomerID,
                     Balance = 0
-                }
-            };
-            _db.Customers.Add(customer);
-            await _db.SaveChangesAsync();
+                };
+                await _walletCommandRepository.AddWithOpenDBTransaction(wallet, transaction);
 
-            return ApiResponse<CustomerRegisterResponseDTO>.Success(
-                "Customer Registration Complete",
-                new CustomerRegisterResponseDTO
-                {
-                    Id = customer.Id,
-                    Age = customer.Age,
-                    FirstName = customer.FirstName,
-                    LastName = customer.LastName,
-                    Status = customer.Status
-                }
-            );
+                //Commit all transactions
+                _customerCommandRepository.CommitTransaction(transaction);
 
+                return ApiResponse<CustomerRegisterResponseDTO>.Success(
+                    "Customer Registration Complete", 
+                    new CustomerRegisterResponseDTO
+                    {
+                        Id = customer.Id,
+                        Age = customer.Age,
+                        FirstName = customer.FirstName,
+                        LastName = customer.LastName,
+                        Status = customer.Status
+                    }
+                );
+            }
+            catch (Exception e)
+            {
+                _customerCommandRepository.RollbackTransaction(transaction);
+                throw;
+            }
         }
         catch (Exception e)
         {
@@ -124,6 +145,10 @@ public class CustomerAuthenticationService
                     );
             }
 
+            //Update Last_login field in Customer table
+            customer.LastLogin = DateTime.UtcNow;
+            await _customerCommandRepository.UpdateAsync(customer);
+
             //map customer to DTO for controller consumption
             CustomerLoginResponseDTO responseData = new CustomerLoginResponseDTO
             {
@@ -148,4 +173,5 @@ public class CustomerAuthenticationService
             return ApiResponse<CustomerLoginResponseDTO>.Failure(e.Message, StatusCodes.ServerError );
         }
     }
+    
 }

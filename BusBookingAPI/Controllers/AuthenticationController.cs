@@ -1,5 +1,6 @@
 using BusBooking.Models.DTO.RequestDTOs;
 using BusBooking.Services.BL.Implementations;
+using BusBooking.Services.BL.Interfaces;
 using BusBookingAPI.Helpers;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,9 +10,9 @@ namespace BusBookingAPI.Controllers;
 [Route("api/v1/auth")]
 public class AuthenticationController : Controller
 {
-    private readonly CustomerAuthenticationService _customerAuthenticationService;
+    private readonly ICustomerAuthenticationService _customerAuthenticationService;
     
-    public AuthenticationController(CustomerAuthenticationService customerAuthenticationService)
+    public AuthenticationController(ICustomerAuthenticationService customerAuthenticationService)
     {
         _customerAuthenticationService = customerAuthenticationService;
     }
@@ -21,6 +22,13 @@ public class AuthenticationController : Controller
     {
         var response = await _customerAuthenticationService.CustomerRegisterTask(request);
 
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
+    
+    [HttpPost("login_customer")]
+    public async Task<IActionResult> LoginCustomer([FromBody] CustomerLoginRequestDTO request)
+    {
+        var response = await _customerAuthenticationService.CustomerLoginTask(request);
         return HttpResponseHelper.GetHttpResponse(response);
     }
 

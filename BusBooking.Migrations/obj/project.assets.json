@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "targets": {
     "net10.0": {
       "Dapper/2.1.79": {
@@ -13,6 +13,20 @@
           "lib/net10.0/Dapper.dll": {
             "related": ".xml"
           }
+        }
+      },
+      "EFCore.NamingConventions/10.0.1": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore": "[10.0.1, 11.0.0)",
+          "Microsoft.EntityFrameworkCore.Relational": "[10.0.1, 11.0.0)",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.1"
+        },
+        "compile": {
+          "lib/net10.0/EFCore.NamingConventions.dll": {}
+        },
+        "runtime": {
+          "lib/net10.0/EFCore.NamingConventions.dll": {}
         }
       },
       "Microsoft.EntityFrameworkCore/10.0.8": {
@@ -294,6 +308,7 @@
         "dependencies": {
           "BusBooking.Models": "1.0.0",
           "Dapper": "2.1.79",
+          "EFCore.NamingConventions": "10.0.1",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.2"
         },
         "compile": {
@@ -338,6 +353,18 @@
         "lib/netstandard2.0/Dapper.dll",
         "lib/netstandard2.0/Dapper.xml",
         "readme.md"
+      ]
+    },
+    "EFCore.NamingConventions/10.0.1": {
+      "sha512": "Xs5k8XfNKPkkQSkGmZkmDI1je0prLTdxse+s8PgTFZxyBrlrTLzTBUTVJtQKSsbvu4y+luAv8DdtO5SALJE++A==",
+      "type": "package",
+      "path": "efcore.namingconventions/10.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "efcore.namingconventions.10.0.1.nupkg.sha512",
+        "efcore.namingconventions.nuspec",
+        "lib/net10.0/EFCore.NamingConventions.dll"
       ]
     },
     "Microsoft.EntityFrameworkCore/10.0.8": {
@@ -792,11 +819,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Migrations\\BusBooking.Migrations.csproj",
+      "projectUniqueName": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Migrations\\BusBooking.Migrations.csproj",
       "projectName": "BusBooking.Migrations",
-      "projectPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Migrations\\BusBooking.Migrations.csproj",
+      "projectPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Migrations\\BusBooking.Migrations.csproj",
       "packagesPath": "C:\\Users\\regi4\\.nuget\\packages\\",
-      "outputPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Migrations\\obj\\",
+      "outputPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Migrations\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -815,10 +842,11 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj": {
-              "projectPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj"
+            "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj": {
+              "projectPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj"
             }
           }
         }
@@ -837,6 +865,7 @@
     },
     "frameworks": {
       "net10.0": {
+        "framework": "net10.0",
         "targetAlias": "net10.0",
         "dependencies": {
           "Microsoft.EntityFrameworkCore": {

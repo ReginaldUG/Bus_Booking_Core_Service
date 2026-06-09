@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "O514mIDT36k=",
+  "dgSpecHash": "wCPP0cB/wIo=",
   "success": true,
-  "projectFilePath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Services\\BusBooking.Services.csproj",
+  "projectFilePath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Services\\BusBooking.Services.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\regi4\\.nuget\\packages\\dapper\\2.1.79\\dapper.2.1.79.nupkg.sha512",
+    "C:\\Users\\regi4\\.nuget\\packages\\efcore.namingconventions\\10.0.1\\efcore.namingconventions.10.0.1.nupkg.sha512",
     "C:\\Users\\regi4\\.nuget\\packages\\isopoh.cryptography.argon2\\2.0.0\\isopoh.cryptography.argon2.2.0.0.nupkg.sha512",
     "C:\\Users\\regi4\\.nuget\\packages\\isopoh.cryptography.blake2b\\2.0.0\\isopoh.cryptography.blake2b.2.0.0.nupkg.sha512",
     "C:\\Users\\regi4\\.nuget\\packages\\isopoh.cryptography.securearray\\2.0.0\\isopoh.cryptography.securearray.2.0.0.nupkg.sha512",

@@ -11,7 +11,7 @@ namespace BusBooking.Models.Entities
         public int Id { get; set; }
         public required string RouteName { get; set; }
         public decimal Price { get; set; }
-        public RouteType Type { get; set; }
+        public string Type { get; set; }
         public DateTime DepartureTime { get; set; }
         public DateTime ArrivalTime {get; set; }
         public DateTime CreatedAt { get; set; }

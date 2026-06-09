@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Core\\BusBooking.Core.csproj": {}
+    "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Core\\BusBooking.Core.csproj": {}
   },
   "projects": {
-    "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Core\\BusBooking.Core.csproj": {
+    "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Core\\BusBooking.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Core\\BusBooking.Core.csproj",
+        "projectUniqueName": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Core\\BusBooking.Core.csproj",
         "projectName": "BusBooking.Core",
-        "projectPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Core\\BusBooking.Core.csproj",
+        "projectPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Core\\BusBooking.Core.csproj",
         "packagesPath": "C:\\Users\\regi4\\.nuget\\packages\\",
-        "outputPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Core\\obj\\",
+        "outputPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Core\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -30,6 +30,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -48,6 +49,7 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "imports": [
             "net461",

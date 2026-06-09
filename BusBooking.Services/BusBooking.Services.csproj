@@ -15,8 +15,4 @@
     <ProjectReference Include="..\BusBooking.Models\BusBooking.Models.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="BL\Interfaces\" />
-  </ItemGroup>
-
 </Project>
