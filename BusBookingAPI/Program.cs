@@ -22,6 +22,13 @@ using(var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+
+    if (!db.Routes.Any())
+    {
+        var importer = new BusBooking.Data.Seed.RouteCSVImporter(db);
+        importer.Import("BusBooking.Data/Seed/routes.csv");
+    }
+    db.SaveChanges();
 }
 
 if(!app.Environment.IsDevelopment())

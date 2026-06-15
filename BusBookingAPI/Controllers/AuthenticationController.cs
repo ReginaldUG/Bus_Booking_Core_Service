@@ -11,6 +11,7 @@ namespace BusBookingAPI.Controllers;
 public class AuthenticationController : Controller
 {
     private readonly ICustomerAuthenticationService _customerAuthenticationService;
+    private readonly IDriverAuthenticationService _driverAuthenticationService;
     
     public AuthenticationController(ICustomerAuthenticationService customerAuthenticationService)
     {
@@ -29,6 +30,13 @@ public class AuthenticationController : Controller
     public async Task<IActionResult> LoginCustomer([FromBody] CustomerLoginRequestDTO request)
     {
         var response = await _customerAuthenticationService.CustomerLoginTask(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
+
+    [HttpPost("login_driver")]
+    public async Task<IActionResult> DriverCustomer([FromBody] DriverLoginRequestDTO request)
+    {
+        var response = await _driverAuthenticationService.DriverLoginTask(request);
         return HttpResponseHelper.GetHttpResponse(response);
     }
 
