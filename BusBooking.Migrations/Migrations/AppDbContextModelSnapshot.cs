@@ -73,7 +73,7 @@ namespace BusBooking.Migrations.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("RouteId")
+                    b.Property<int?>("RouteId")
                         .HasColumnType("integer");
 
                     b.Property<int>("SeatCapacity")
@@ -224,6 +224,9 @@ namespace BusBooking.Migrations.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("LastLogin")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -251,14 +254,17 @@ namespace BusBooking.Migrations.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("ArrivalTime")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<TimeOnly?>("ArrivalTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<bool>("BusAssigned")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("DepartureTime")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<TimeOnly>("DepartureTime")
+                        .HasColumnType("time without time zone");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
@@ -311,8 +317,7 @@ namespace BusBooking.Migrations.Migrations
                     b.HasOne("BusBooking.Models.Entities.Route", "Route")
                         .WithOne("Bus")
                         .HasForeignKey("BusBooking.Models.Entities.Bus", "RouteId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Route");
                 });

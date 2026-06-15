@@ -25,4 +25,8 @@
     <ProjectReference Include="..\BusBooking.Services\BusBooking.Services.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Seed\" />
+  </ItemGroup>
+
 </Project>

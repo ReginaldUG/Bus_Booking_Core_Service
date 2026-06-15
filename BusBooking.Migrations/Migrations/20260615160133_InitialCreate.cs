@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BusBooking.Migrations.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigrationFix : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -42,8 +42,9 @@ namespace BusBooking.Migrations.Migrations
                     RouteName = table.Column<string>(type: "text", nullable: false),
                     Price = table.Column<decimal>(type: "numeric", nullable: false),
                     Type = table.Column<string>(type: "text", nullable: false),
-                    DepartureTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ArrivalTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DepartureTime = table.Column<TimeOnly>(type: "time without time zone", nullable: false),
+                    BusAssigned = table.Column<bool>(type: "boolean", nullable: false),
+                    ArrivalTime = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -81,7 +82,7 @@ namespace BusBooking.Migrations.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SeatCapacity = table.Column<int>(type: "integer", nullable: false),
-                    RouteId = table.Column<int>(type: "integer", nullable: false),
+                    RouteId = table.Column<int>(type: "integer", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -129,7 +130,8 @@ namespace BusBooking.Migrations.Migrations
                     RouteId = table.Column<int>(type: "integer", nullable: false),
                     Price = table.Column<decimal>(type: "numeric", nullable: false),
                     Completed = table.Column<bool>(type: "boolean", nullable: false),
-                    isPaid = table.Column<bool>(type: "boolean", nullable: false)
+                    isPaid = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -165,9 +167,10 @@ namespace BusBooking.Migrations.Migrations
                     Age = table.Column<int>(type: "integer", nullable: false),
                     Email = table.Column<string>(type: "text", nullable: false),
                     HashedPassword = table.Column<string>(type: "text", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: false),
                     BusId = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastLogin = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
