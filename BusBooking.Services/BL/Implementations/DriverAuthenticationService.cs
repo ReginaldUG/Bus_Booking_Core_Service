@@ -16,14 +16,16 @@ public class DriverAuthenticationService : IDriverAuthenticationService
     private readonly IQueryRepository<Route> _routeQueryRepository;
     private readonly ICommandRepository<Driver> _driverCommandRepository;
     private readonly ICommandRepository<Bus> _busCommandRepository;
+    private readonly ICommandRepository<Route> _routeCommandRepository;
     private readonly AuthenticationHelper _authenticationHelper;
 
-    public DriverAuthenticationService(IQueryRepository<Driver> driverQueryRepository, IQueryRepository<Route> routeQueryRepository, ICommandRepository<Driver> driverCommandRepository, ICommandRepository<Bus> busCommandRepository, AuthenticationHelper authenticationHelper)
+    public DriverAuthenticationService(IQueryRepository<Driver> driverQueryRepository, IQueryRepository<Route> routeQueryRepository, ICommandRepository<Driver> driverCommandRepository, ICommandRepository<Bus> busCommandRepository, ICommandRepository<Route> routeCommandRespository, AuthenticationHelper authenticationHelper)
     {
         _driverQueryRepository = driverQueryRepository;
         _routeQueryRepository = routeQueryRepository;
         _driverCommandRepository = driverCommandRepository;
         _busCommandRepository = busCommandRepository;
+        _routeCommandRepository = routeCommandRespository;
 
         _authenticationHelper = authenticationHelper;
     }
@@ -82,7 +84,7 @@ public class DriverAuthenticationService : IDriverAuthenticationService
         {
             //check that driver email already exists
             var driverExists = await _driverQueryRepository.FindByCriteriaAsync("Email", registerRequest.Email);
-            if (driverExists != null)
+            if (driverExists == null)
             {
                 return ApiResponse<DriverRegisterResponseDTO>
                     .Failure(
@@ -122,6 +124,13 @@ public class DriverAuthenticationService : IDriverAuthenticationService
                 };
                 int busId = await _busCommandRepository.AddWithOpenDBTransaction(bus, transaction);
 
+                //Update Route BusAssigned Flag if route ewas given to bus
+                if (availableRoute != null)
+                {
+                    availableRoute.BusAssigned = true;
+                    await _routeCommandRepository.UpdateWithOpenDbTransactionAsync(availableRoute, transaction);
+                }
+
                 //create driver after bus creation
                 var driver = new Driver
                 {
@@ -148,7 +157,6 @@ public class DriverAuthenticationService : IDriverAuthenticationService
                         Status = driver.Status
                     }
                 );
-                //assign new bus created to driver
             }
             catch (Exception e)
             {

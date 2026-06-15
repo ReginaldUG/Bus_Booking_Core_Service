@@ -14,7 +14,7 @@ namespace BusBooking.Models.Entities
         public decimal Amount { get; set; }
         public string Narration { get; set; }
         
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual CustomerWallet CustomerWallet { get; set; }
     }

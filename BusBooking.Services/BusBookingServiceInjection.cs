@@ -11,6 +11,7 @@ public static class BusBookingServiceInjection
     public static void AddServiceInjections(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<ICustomerAuthenticationService, CustomerAuthenticationService>();
+        services.AddScoped<IDriverAuthenticationService, DriverAuthenticationService>();
         services.AddScoped<AuthenticationHelper>();
     }
 }

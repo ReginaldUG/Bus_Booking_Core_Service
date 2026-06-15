@@ -15,6 +15,7 @@ namespace BusBooking.Models.Entities
         public decimal Price {get; set; }
         public bool Completed { get; set; }
         public bool isPaid { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual Customer Customer { get; set; } = null!;
         public virtual Bus Bus { get; set; } = null!;

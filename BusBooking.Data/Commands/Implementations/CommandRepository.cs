@@ -35,7 +35,28 @@ public class CommandRepository<TEntity> : ICommandRepository<TEntity> where TEnt
     public async Task<int> AddWithOpenDBTransaction(TEntity entity, NpgsqlTransaction sqltransaction)
     {
         var query = _utilities.GenerateInsertQuery<TEntity>();
-        return await _executer.ExecuteCommandAndReturnIdAsync(query, entity, sqltransaction);
+        var id = await _executer.ExecuteCommandAndReturnIdAsync(
+            query,
+            entity,
+            sqltransaction
+        );
+
+        // Assign generated Id back to entity
+        var idProperty = typeof(TEntity).GetProperty("Id");
+
+        if (idProperty != null && idProperty.CanWrite)
+        {
+            idProperty.SetValue(entity, id);
+        }
+
+        return id;
+    }
+
+    public async Task UpdateWithOpenDbTransactionAsync(TEntity entity, NpgsqlTransaction sqltransaction)
+    {
+        var query = _utilities.GenerateUpdateQuery<TEntity>();
+        await _executer.ExecuteCommandAsync(query, entity, sqltransaction);
+
     }
 
     public NpgsqlTransaction BeginTransaction()
@@ -50,34 +71,24 @@ public class CommandRepository<TEntity> : ICommandRepository<TEntity> where TEnt
     {
         try
         {
-            if (sqlTransaction.Connection != null)
-            {
-                using var conn = sqlTransaction.Connection;
-                sqlTransaction.Commit();
-                conn.Close();
-            }
+            sqlTransaction.Commit();        
         }
         finally
         {
-            if (sqlTransaction.Connection != null && sqlTransaction.Connection.State == ConnectionState.Open)
-                sqlTransaction.Connection.Close();
+            sqlTransaction.Connection?.Close();
+            sqlTransaction.Dispose();
         }
     }
     public void RollbackTransaction(NpgsqlTransaction sqlTransaction)
     {
         try
         {
-            if (sqlTransaction.Connection != null)
-            {
-                using var conn = sqlTransaction.Connection;
-                sqlTransaction.Rollback();
-                conn.Close();
-            }
+            sqlTransaction.Rollback();
         }
         finally
         {
-            if (sqlTransaction.Connection != null && sqlTransaction.Connection.State == ConnectionState.Open)
-                sqlTransaction.Connection.Close();
+            sqlTransaction.Connection?.Close();
+            sqlTransaction.Dispose();
         }
     }
 }

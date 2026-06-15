@@ -11,8 +11,12 @@ public class WriteUtilities : IWriteUtilities
         var tableName = typeof(TEntity).GetWriteTableName();
 
         var properties = typeof(TEntity).GetProperties()
-            .Where(p => p.Name != "Id" && !p.PropertyType.IsGenericType && !p.PropertyType.IsClass ||
-                        p.PropertyType == typeof(string))
+            .Where(
+                p => p.Name != "Id" &&(
+                    (!p.PropertyType.IsGenericType &&
+                    !p.PropertyType.IsClass)
+                    || p.PropertyType == typeof(string)
+                ))
             .Select(p => p.Name)
             .ToList();
 
@@ -21,7 +25,8 @@ public class WriteUtilities : IWriteUtilities
         insertQuery.Append(string.Join(", ", properties.Select(p => $"\"{p}\"")));
         insertQuery.Append(") VALUES (");
         insertQuery.Append(string.Join(", ", properties.Select(p => $"@{p}")));
-        insertQuery.Append(") RETURNING \"Id\";");
+        insertQuery.Append(")");
+        insertQuery.Append(" RETURNING \"Id\";");
 
         return insertQuery.ToString();
     }
@@ -31,7 +36,14 @@ public class WriteUtilities : IWriteUtilities
         var tableName = typeof(TEntity).GetWriteTableName();
 
         var properties = typeof(TEntity).GetProperties()
-            .Where(p => p.Name != "Id" && p.Name != "CustomerId" && (!p.PropertyType.IsGenericType && !p.PropertyType.IsClass || p.PropertyType == typeof(string)))
+            .Where(
+                p => p.Name != "Id" && (
+
+                    (!p.PropertyType.IsGenericType &&
+                    !p.PropertyType.IsClass)
+                    || p.PropertyType == typeof(string)
+                )
+            )
             .Select(p => p.Name)
             .ToList();
         

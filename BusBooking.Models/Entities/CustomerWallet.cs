@@ -11,7 +11,7 @@ namespace BusBooking.Models.Entities
         public int Id { get; set; }
         public int CustomerId {get; set; }        
         public decimal Balance { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; }
 
         public virtual Customer Customer { get; set; }

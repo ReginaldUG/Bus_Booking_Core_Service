@@ -17,7 +17,7 @@ namespace BusBooking.Models.Entities
         public string Status { get; set; }
         public DateTime LastLogin { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         //Nav Properties
         public virtual CustomerWallet? Wallet { get; set; }     //Customer can have one wallet, One-To-One

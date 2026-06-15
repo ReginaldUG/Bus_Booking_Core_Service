@@ -14,9 +14,11 @@ namespace BusBooking.Models.Entities
         public int Age {get; set; }
         public required string Email { get; set; }
         public required string HashedPassword { get; set; }
-        public string Status { get; set; }
         public int BusId { get; set; }
+        public string Status { get; set; }        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime LastLogin { get; set; }
         public virtual Bus Bus { get; set; }
-        public DateTime CreatedAt { get; set; }
+        
     }
 }

@@ -81,30 +81,6 @@ namespace BusBooking.Data
             modelBuilder.Entity<Bus>()
                 .HasIndex(b => b.RouteId)
                 .IsUnique();
-
-            //Default value
-            modelBuilder.Entity<Customer>()
-                .Property(p => p.CreatedAt)
-                .HasDefaultValueSql("GETUTCDATE()");
-            modelBuilder.Entity<Booking>()
-                .Property(p => p.CreatedAt)
-                .HasDefaultValueSql("GETUTCDATE()");
-            modelBuilder.Entity<Bus>()
-                .Property(p => p.CreatedAt)
-                .HasDefaultValueSql("GETUTCDATE()");
-            modelBuilder.Entity<CustomerWallet>()
-                .Property(p => p.CreatedAt)
-                .HasDefaultValueSql("GETUTCDATE()");
-            modelBuilder.Entity<CustomerWalletTransactions>()
-                .Property(p => p.CreatedAt)
-                .HasDefaultValueSql("GETUTCDATE()");
-            modelBuilder.Entity<Driver>()
-                .Property(p => p.CreatedAt)
-                .HasDefaultValueSql("GETUTCDATE()");
-            modelBuilder.Entity<Route>()
-                .Property(p => p.CreatedAt)
-                .HasDefaultValueSql("GETUTCDATE()");
-
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())

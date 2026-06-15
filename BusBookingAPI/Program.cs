@@ -25,10 +25,11 @@ using(var scope = app.Services.CreateScope())
 
     if (!db.Routes.Any())
     {
-        var importer = new BusBooking.Data.Seed.RouteCSVImporter(db);
-        importer.Import("BusBooking.Data/Seed/routes.csv");
+        var importer = new BusBooking.Data.SeedHelper.RouteCSVImporter(db);
+        importer.Import("Seed/routes.csv");
+        db.SaveChanges();
     }
-    db.SaveChanges();
+    
 }
 
 if(!app.Environment.IsDevelopment())

@@ -22,15 +22,21 @@ public class WriteExecuter : IWriteExecuter
 
     public async Task ExecuteCommandAsync(string query, object param, NpgsqlTransaction transaction)
     {
-        if (transaction == null) 
+        if (transaction == null)
             throw new ArgumentNullException(nameof(transaction), "Transaction cannot be null.");
 
+        if (transaction.Connection == null)
+            throw new InvalidOperationException("Transaction connection is null");
+            
         await transaction.Connection.ExecuteAsync(query, param, transaction, commandTimeout: _timeout);
     }
     public async Task<int> ExecuteCommandAndReturnIdAsync(string query, object param, NpgsqlTransaction transaction)
     {
-        if (transaction == null) 
+        if (transaction == null)
             throw new ArgumentNullException(nameof(transaction), "Transaction cannot be null.");
+
+        if (transaction.Connection == null)
+            throw new InvalidOperationException("Transaction connection is null");
             
         return await transaction.Connection.ExecuteScalarAsync<int>(query, param, transaction, commandTimeout: _timeout);
     }
