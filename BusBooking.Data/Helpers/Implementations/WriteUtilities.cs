@@ -13,9 +13,9 @@ public class WriteUtilities : IWriteUtilities
         var properties = typeof(TEntity).GetProperties()
             .Where(
                 p => p.Name != "Id" &&(
-                    (!p.PropertyType.IsGenericType &&
-                    !p.PropertyType.IsClass)
-                    || p.PropertyType == typeof(string)
+                    p.PropertyType == typeof(string) ||
+                    Nullable.GetUnderlyingType(p.PropertyType)?.IsValueType == true ||
+                    (!p.PropertyType.IsGenericType && p.PropertyType.IsValueType)
                 ))
             .Select(p => p.Name)
             .ToList();

@@ -33,6 +33,6 @@ public class ReadUtilities : IReadUtilities
     public string GenerateSelectSingleRecordQuery<TEntity>(string propertyName, string value)
     {
         var tableName = typeof(TEntity).GetReadTableName();
-        return $"SELECT * FROM \"{tableName}\" WHERE \"{propertyName}\" = '{value.Trim()}' LIMIT 1";
+        return $"SELECT * FROM \"{tableName}\" WHERE \"{propertyName}\" = '{value.Trim()}' ORDER BY \"Id\" ASC LIMIT 1";
     }
 }

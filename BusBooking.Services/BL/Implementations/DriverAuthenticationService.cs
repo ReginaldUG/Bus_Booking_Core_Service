@@ -84,7 +84,7 @@ public class DriverAuthenticationService : IDriverAuthenticationService
         {
             //check that driver email already exists
             var driverExists = await _driverQueryRepository.FindByCriteriaAsync("Email", registerRequest.Email);
-            if (driverExists == null)
+            if (driverExists != null)
             {
                 return ApiResponse<DriverRegisterResponseDTO>
                     .Failure(
@@ -100,9 +100,9 @@ public class DriverAuthenticationService : IDriverAuthenticationService
             }
 
             //check age
-            if(registerRequest.Age < 25)
+            if(registerRequest.Age < Rules.MIN_DRIVER_AGE)
             {
-                return ApiResponse<DriverRegisterResponseDTO>.Failure("Must be 25 and above", StatusCodes.BadRequest);
+                return ApiResponse<DriverRegisterResponseDTO>.Failure($"Must be {Rules.MIN_DRIVER_AGE} and above", StatusCodes.BadRequest);
             }
 
             //hash password
@@ -114,18 +114,22 @@ public class DriverAuthenticationService : IDriverAuthenticationService
                 //create bus
                 BusCapacity[] capacities = Enum.GetValues<BusCapacity>();
                 BusCapacity randomSize = capacities[Random.Shared.Next(capacities.Length)];
+                
                 var availableRoute = await _routeQueryRepository.FindByCriteriaAsync("BusAssigned", "false");
+                bool hasValidRoute = availableRoute != null && availableRoute.Id > 0;
 
+                
+                       //debugging
                 //Create new bus for driver
                 var bus = new Bus
                 {
                     SeatCapacity = randomSize,
-                    RouteId = availableRoute?.Id
+                    RouteId = hasValidRoute ? availableRoute.Id : null
                 };
                 int busId = await _busCommandRepository.AddWithOpenDBTransaction(bus, transaction);
 
                 //Update Route BusAssigned Flag if route ewas given to bus
-                if (availableRoute != null)
+                if (hasValidRoute)
                 {
                     availableRoute.BusAssigned = true;
                     await _routeCommandRepository.UpdateWithOpenDbTransactionAsync(availableRoute, transaction);
@@ -140,7 +144,7 @@ public class DriverAuthenticationService : IDriverAuthenticationService
                     Email = registerRequest.Email,
                     HashedPassword = hashedPassword,
                     BusId = busId,
-                    Status = availableRoute==null ? AccountStatus.Pending : AccountStatus.Active
+                    Status = hasValidRoute ? AccountStatus.Active : AccountStatus.Pending
                 };
                 await _driverCommandRepository.AddWithOpenDBTransaction(driver, transaction);
 

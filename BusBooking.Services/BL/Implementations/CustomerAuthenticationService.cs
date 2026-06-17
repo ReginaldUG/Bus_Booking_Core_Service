@@ -51,9 +51,9 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
             }
 
             //Check that Age meets Age requirements
-            if(registerRequest.Age < 18)
+            if(registerRequest.Age < Rules.MIN_CUSTOMER_AGE)
             {
-                return ApiResponse<CustomerRegisterResponseDTO>.Failure("Must be 18 and above", StatusCodes.BadRequest);
+                return ApiResponse<CustomerRegisterResponseDTO>.Failure($"Must be {Rules.MIN_CUSTOMER_AGE} and above", StatusCodes.BadRequest);
             }
 
             //HashPassword

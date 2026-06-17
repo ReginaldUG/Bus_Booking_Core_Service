@@ -1,8 +1,12 @@
 using BusBooking.Data;
 using BusBooking.Services;
+using BusBookingAPI.Helpers;
+using Dapper;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+SqlMapper.AddTypeHandler(new TimeOnlyTypeHandler());
 
 builder.Services.AddControllers();
 
