@@ -51,6 +51,7 @@ namespace BusBooking.Migrations.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Routes", x => x.Id);
+                    table.CheckConstraint("chk_Route_Price", "\"Price\" >= 2000");
                 });
 
             migrationBuilder.CreateTable(
@@ -130,12 +131,16 @@ namespace BusBooking.Migrations.Migrations
                     RouteId = table.Column<int>(type: "integer", nullable: false),
                     Price = table.Column<decimal>(type: "numeric", nullable: false),
                     Completed = table.Column<bool>(type: "boolean", nullable: false),
+                    isCancelled = table.Column<bool>(type: "boolean", nullable: false),
+                    CancelledBy = table.Column<string>(type: "text", nullable: false),
                     isPaid = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Bookings", x => x.Id);
+                    table.CheckConstraint("chk_CancelledBy", "\"CancelledBy\" IN ('customer', 'driver')");
+                    table.CheckConstraint("chk_CancelledBy_Condition", "(\"isCancelled\" = true AND \"CancelledBy\" IN ('customer', 'driver')) OR (\"isCancelled\" = false AND \"CancelledBy\" IS NULL)");
                     table.ForeignKey(
                         name: "FK_Bookings_Buses_BusId",
                         column: x => x.BusId,

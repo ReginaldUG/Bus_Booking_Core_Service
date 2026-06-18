@@ -1,3 +1,4 @@
+using BusBooking.Core.Constants;
 using BusBooking.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -81,6 +82,22 @@ namespace BusBooking.Data
             modelBuilder.Entity<Bus>()
                 .HasIndex(b => b.RouteId)
                 .IsUnique();
+            
+            //CONSTRAINTS
+            modelBuilder.Entity<Booking>()
+                .ToTable(t => t.HasCheckConstraint(
+                    "chk_CancelledBy", "\"CancelledBy\" IN ('customer', 'driver')"
+                ));
+            modelBuilder.Entity<Booking>()
+                .ToTable(t => t.HasCheckConstraint(
+                    "chk_CancelledBy_Condition", 
+                    "(\"isCancelled\" = true AND \"CancelledBy\" IN ('customer', 'driver')) OR (\"isCancelled\" = false AND \"CancelledBy\" IS NULL)"
+                ));
+
+            modelBuilder.Entity<Route>()
+                .ToTable(t => t.HasCheckConstraint(
+                    "chk_Route_Price", $"\"Price\" >= {Rules.MIN_ROUTE_PRICE}"
+                ));
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())

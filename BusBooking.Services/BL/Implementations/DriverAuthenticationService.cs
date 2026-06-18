@@ -117,9 +117,7 @@ public class DriverAuthenticationService : IDriverAuthenticationService
                 
                 var availableRoute = await _routeQueryRepository.FindByCriteriaAsync("BusAssigned", "false");
                 bool hasValidRoute = availableRoute != null && availableRoute.Id > 0;
-
                 
-                       //debugging
                 //Create new bus for driver
                 var bus = new Bus
                 {

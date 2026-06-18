@@ -13,7 +13,9 @@ namespace BusBooking.Models.Entities
         public int BusId {get; set; }
         public int RouteId{get; set; }
         public decimal Price {get; set; }
-        public bool Completed { get; set; }
+        public bool Completed { get; set; } = false;
+        public bool isCancelled { get; set; } = false;
+        public string CancelledBy { get; set; }
         public bool isPaid { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

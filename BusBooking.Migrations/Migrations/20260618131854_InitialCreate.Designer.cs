@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BusBooking.Migrations.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260616130002_InitialCreate")]
+    [Migration("20260618131854_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -36,6 +36,10 @@ namespace BusBooking.Migrations.Migrations
                     b.Property<int>("BusId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("CancelledBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<bool>("Completed")
                         .HasColumnType("boolean");
 
@@ -51,6 +55,9 @@ namespace BusBooking.Migrations.Migrations
                     b.Property<int>("RouteId")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("isCancelled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("isPaid")
                         .HasColumnType("boolean");
 
@@ -62,7 +69,12 @@ namespace BusBooking.Migrations.Migrations
 
                     b.HasIndex("RouteId");
 
-                    b.ToTable("Bookings");
+                    b.ToTable("Bookings", t =>
+                        {
+                            t.HasCheckConstraint("chk_CancelledBy", "\"CancelledBy\" IN ('customer', 'driver')");
+
+                            t.HasCheckConstraint("chk_CancelledBy_Condition", "(\"isCancelled\" = true AND \"CancelledBy\" IN ('customer', 'driver')) OR (\"isCancelled\" = false AND \"CancelledBy\" IS NULL)");
+                        });
                 });
 
             modelBuilder.Entity("BusBooking.Models.Entities.Bus", b =>
@@ -285,7 +297,10 @@ namespace BusBooking.Migrations.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Routes");
+                    b.ToTable("Routes", t =>
+                        {
+                            t.HasCheckConstraint("chk_Route_Price", "\"Price\" >= 2000");
+                        });
                 });
 
             modelBuilder.Entity("BusBooking.Models.Entities.Booking", b =>

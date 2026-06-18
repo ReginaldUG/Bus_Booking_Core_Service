@@ -12,6 +12,8 @@ public static class BusBookingServiceInjection
     {
         services.AddScoped<ICustomerAuthenticationService, CustomerAuthenticationService>();
         services.AddScoped<IDriverAuthenticationService, DriverAuthenticationService>();
+        services.AddScoped<IAccountEvaluationService, AccountEvaluationService>();
+        services.AddScoped<IRouteService, RouteService>();
         services.AddScoped<AuthenticationHelper>();
     }
 }
