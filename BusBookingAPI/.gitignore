@@ -1,0 +1,68 @@
+###############################################
+##  .NET Core & C# Compilation Outputs       ##
+###############################################
+# Deep-clean all build binaries and scratchpads across all project layers
+**/[Bb]in/
+**/[Oo]bj/
+**/[Oo]ut/
+**/[Ll]og/
+**/[Ll]ogs/
+
+# Explicitly exclude all artifacts, dynamic engines, and link libraries
+*.dll
+*.pdb
+*.exe
+*.bblg
+*.rsp
+*.ilk
+*.meta
+*.iobj
+*.ipdb
+*.pgc
+*.pgd
+
+###############################################
+##  IDE Settings, Tooling & Diagnostic Cache  ##
+###############################################
+# Visual Studio / ReSharper / JetBrains Rider / VS Code profiles
+.vs/
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+.localhistory/
+*.binlog
+
+###############################################
+##  Local Environment & Secrets Management    ##
+###############################################
+# Protect development overrides and localized connection secrets
+appsettings.Development.json
+appsettings.Local.json
+*.user.config
+.env
+
+###############################################
+##  Database & Structural Schemas            ##
+###############################################
+# Prevent binary database storage files from getting pushed
+*.mdf
+*.ldf
+*.ndf
+*.db
+*.sqlite
+
+###############################################
+##  Operating System Garbage                 ##
+###############################################
+# OS-specific clutter
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
