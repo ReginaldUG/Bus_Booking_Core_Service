@@ -13,11 +13,11 @@ namespace BusBooking.Models.Entities
         public decimal Price { get; set; }
         public string Type { get; set; }
         public TimeOnly DepartureTime { get; set; }
-        public bool BusAssigned { get; set; } = false;
+        public int NumberOfBuses { get; set; }
         public TimeOnly? ArrivalTime {get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; }
-        public virtual Bus? Bus {get; set; }
+        public virtual ICollection<Bus>? Buses { get; set; } = new List<Bus>();
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     }
 }

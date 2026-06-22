@@ -35,7 +35,7 @@ public class AccountEvaluationService : IAccountEvaluationService
         _routeQueryRepository = routeQueryRepository;
         _busQueryRepository = busQueryRepository;
     }
-
+/*
     public async Task<ApiResponse> DriverActivationServiceTask()
     {
         using var transaction = _driverCommandRepository.BeginTransaction();
@@ -89,5 +89,5 @@ public class AccountEvaluationService : IAccountEvaluationService
         }
     }
 
-
+*/
 }

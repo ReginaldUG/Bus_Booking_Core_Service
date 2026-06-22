@@ -27,20 +27,17 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
 
         _authenticationHelper = authenticationHelper;
     }
-    
+
     public async Task<ApiResponse<CustomerRegisterResponseDTO>> CustomerRegisterTask (CustomerRegisterRequestDTO registerRequest)
     {
         try
         {
-            //Check that Email does not currently exist
-            var customerExists = await _customerQueryRepository.FindByCriteriaAsync("Email", registerRequest.Email);
-            if (customerExists != null)
+            //validate inputs
+            var validateInputs = await ValidateRequestInputsAsync(registerRequest);
+            if (!validateInputs.Status)
             {
                 return ApiResponse<CustomerRegisterResponseDTO>
-                    .Failure(
-                        ErrorMessages.DUPLICATE_CUSTOMER_FOUND,
-                        StatusCodes.Conflict
-                    );
+                    .Failure(validateInputs.Message, StatusCodes.BadRequest);
             }
 
             //Validate that password meets requirements
@@ -69,16 +66,17 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
                     LastName = registerRequest.LastName,
                     Age = registerRequest.Age,
                     Email = registerRequest.Email,
+                    PhoneNumber = registerRequest.PhoneNumber,
                     HashedPassword = hashedPassword,
                     Status = AccountStatus.Active
                 };
 
                 // save and get the new customer ID
-                int newcustomerId = await _customerCommandRepository.AddWithOpenDBTransaction(customer, transaction);
+                var newcustomer = await _customerCommandRepository.AddWithOpenDBTransaction(customer, transaction);
 
                 var wallet = new CustomerWallet
                 {
-                    CustomerId = newcustomerId,
+                    CustomerId = newcustomer.Id,
                     Balance = 0
                 };
                 await _walletCommandRepository.AddWithOpenDBTransaction(wallet, transaction);
@@ -167,5 +165,45 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
             return ApiResponse<CustomerLoginResponseDTO>.Failure(e.Message, StatusCodes.ServerError );
         }
     }
-    
+
+    private async Task<ApiResponse> ValidateRequestInputsAsync (CustomerRegisterRequestDTO request)
+    {
+        try
+        {
+            var customerExists = await _customerQueryRepository.FindByCriteriaAsync("Email", request.Email);
+            //check if customer already exist
+            if (customerExists != null)
+            {
+                return ApiResponse
+                    .Failure(
+                        ErrorMessages.DUPLICATE_CUSTOMER_FOUND
+                    );
+            }
+
+            //check phone number passed is valid number
+            if (!request.PhoneNumber.All(char.IsDigit))
+            {
+                return ApiResponse
+                    .Failure(
+                        "Phone Number Invalid"
+                    );
+            }
+
+            //check if phone number already exists
+            var numberExist = await _customerQueryRepository.FindByCriteriaAsync("PhoneNumber", request.PhoneNumber);
+            if (numberExist != null)
+            {
+                return ApiResponse
+                    .Failure(
+                        ErrorMessages.DUPLICATE_PHONE_NUMBER_FOUND
+                    );
+            }
+            return ApiResponse.Success("Input Validation passed");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return ApiResponse.Failure(e.Message);
+        }
+    }
 }

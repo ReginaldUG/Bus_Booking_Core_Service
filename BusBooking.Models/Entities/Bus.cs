@@ -11,6 +11,9 @@ namespace BusBooking.Models.Entities
         public int Id {get; set; }
         public BusCapacity SeatCapacity { get; set; }
         public int? RouteId { get; set; }
+        public string PlateNumber {get; set; }
+        public bool DriverAssigned { get; set; }
+        public string Status { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public Route? Route {get; set; }

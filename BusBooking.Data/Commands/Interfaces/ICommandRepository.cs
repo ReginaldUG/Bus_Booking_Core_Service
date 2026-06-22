@@ -6,7 +6,7 @@ public interface ICommandRepository<TEntity> where TEntity : class
 {
     Task AddAsync(TEntity entity);
     Task UpdateAsync(TEntity entity);
-    Task<int> AddWithOpenDBTransaction(TEntity entity, NpgsqlTransaction sqltransaction);
+    Task<TEntity> AddWithOpenDBTransaction(TEntity entity, NpgsqlTransaction sqltransaction);
     Task UpdateWithOpenDbTransactionAsync(TEntity entity, NpgsqlTransaction sqltransaction);
     NpgsqlTransaction BeginTransaction();
     void CommitTransaction(NpgsqlTransaction sqlTransaction);

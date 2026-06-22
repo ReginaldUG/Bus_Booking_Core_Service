@@ -32,7 +32,7 @@ namespace BusBooking.Data
                 .HasForeignKey<CustomerWallet>(w => w.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            _ = modelBuilder.Entity<CustomerWalletTransactions>()
+            modelBuilder.Entity<CustomerWalletTransactions>()
                 .HasOne(t => t.CustomerWallet)
                 .WithMany(w => w.Transactions)
                 .HasForeignKey(t => t.CustomerWalletId)
@@ -40,8 +40,8 @@ namespace BusBooking.Data
             
             modelBuilder.Entity<Bus>()
                 .HasOne(b=>b.Route)
-                .WithOne(r=>r.Bus)
-                .HasForeignKey<Bus>(b=>b.RouteId)
+                .WithMany(r=>r.Buses)
+                .HasForeignKey(b=>b.RouteId)
                 .OnDelete(DeleteBehavior.Restrict);
             
             modelBuilder.Entity<Booking>()
@@ -66,9 +66,23 @@ namespace BusBooking.Data
             modelBuilder.Entity<Customer>()
                 .HasIndex(c => c.Email)
                 .IsUnique();
+            modelBuilder.Entity<Customer>()
+                .HasIndex(c => c.PhoneNumber)
+                .IsUnique();
 
             modelBuilder.Entity<Driver>()
                 .HasIndex(d => d.Email)
+                .IsUnique();
+            modelBuilder.Entity<Driver>()
+                .HasIndex(d => d.PhoneNumber)
+                .IsUnique();
+
+            modelBuilder.Entity<Bus>()
+                .HasIndex(b => b.PlateNumber)
+                .IsUnique();
+
+            modelBuilder.Entity<Route>()
+                .HasIndex(r => r.RouteName)
                 .IsUnique();
 
             modelBuilder.Entity<Booking>()
@@ -77,11 +91,6 @@ namespace BusBooking.Data
                 .HasIndex(b => b.CustomerId);
             modelBuilder.Entity<Booking>()
                 .HasIndex(b => b.BusId);
-
-            //ONE BUS PER ROUTE RULE
-            modelBuilder.Entity<Bus>()
-                .HasIndex(b => b.RouteId)
-                .IsUnique();
             
             //CONSTRAINTS
             modelBuilder.Entity<Booking>()

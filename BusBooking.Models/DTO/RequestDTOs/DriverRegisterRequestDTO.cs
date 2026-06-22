@@ -12,6 +12,8 @@ public class DriverRegisterRequestDTO
     public required int Age {get; set; }
     [Required, EmailAddress]
     public required string Email {get; set; }
+    [Required, StringLength(11)]
+    public required string PhoneNumber { get; set; }
     [Required, MinLength(8)]
     public required string Password { get; set; }    
 }

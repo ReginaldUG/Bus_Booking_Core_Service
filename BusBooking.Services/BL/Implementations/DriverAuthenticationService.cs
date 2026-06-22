@@ -14,15 +14,17 @@ public class DriverAuthenticationService : IDriverAuthenticationService
 {
     private readonly IQueryRepository<Driver> _driverQueryRepository;
     private readonly IQueryRepository<Route> _routeQueryRepository;
+    private readonly IQueryRepository<Bus> _busQueryRepository;
     private readonly ICommandRepository<Driver> _driverCommandRepository;
     private readonly ICommandRepository<Bus> _busCommandRepository;
     private readonly ICommandRepository<Route> _routeCommandRepository;
     private readonly AuthenticationHelper _authenticationHelper;
 
-    public DriverAuthenticationService(IQueryRepository<Driver> driverQueryRepository, IQueryRepository<Route> routeQueryRepository, ICommandRepository<Driver> driverCommandRepository, ICommandRepository<Bus> busCommandRepository, ICommandRepository<Route> routeCommandRespository, AuthenticationHelper authenticationHelper)
+    public DriverAuthenticationService(IQueryRepository<Driver> driverQueryRepository, IQueryRepository<Route> routeQueryRepository, IQueryRepository<Bus> busQueryRepository, ICommandRepository<Driver> driverCommandRepository, ICommandRepository<Bus> busCommandRepository, ICommandRepository<Route> routeCommandRespository, AuthenticationHelper authenticationHelper)
     {
         _driverQueryRepository = driverQueryRepository;
         _routeQueryRepository = routeQueryRepository;
+        _busQueryRepository = busQueryRepository;
         _driverCommandRepository = driverCommandRepository;
         _busCommandRepository = busCommandRepository;
         _routeCommandRepository = routeCommandRespository;
@@ -77,77 +79,66 @@ public class DriverAuthenticationService : IDriverAuthenticationService
             return ApiResponse<DriverLoginResponseDTO>.Failure(e.Message, StatusCodes.ServerError );
         }
     }
-
+        
     public async Task<ApiResponse<DriverRegisterResponseDTO>> DriverRegisterTask (DriverRegisterRequestDTO registerRequest)
     {
         try
         {
-            //check that driver email already exists
-            var driverExists = await _driverQueryRepository.FindByCriteriaAsync("Email", registerRequest.Email);
-            if (driverExists != null)
+            //check that email and number inputs are valid
+            var validateEmailNumberInputs = await ValidateDriverRegInputs(registerRequest);
+            if (!validateEmailNumberInputs.Status)
             {
                 return ApiResponse<DriverRegisterResponseDTO>
                     .Failure(
-                        ErrorMessages.DUPLICATE_DRIVER_FOUND,
-                        StatusCodes.Conflict
+                        validateEmailNumberInputs.Message, StatusCodes.BadRequest
                     );
             }
-            //ensure password meets criteria
-            var passwordCheck = _authenticationHelper.ValidatePasswordRules(registerRequest.Password);
-            if (!passwordCheck.Status)
-            {
-                return ApiResponse<DriverRegisterResponseDTO>.Failure(passwordCheck.Message, StatusCodes.BadRequest);
-            }
 
-            //check age
-            if(registerRequest.Age < Rules.MIN_DRIVER_AGE)
+            var validatePasswordAndAgeInputs = await PasswordAndAgeCheck(registerRequest);
+            if (!validatePasswordAndAgeInputs.Status)
             {
-                return ApiResponse<DriverRegisterResponseDTO>.Failure($"Must be {Rules.MIN_DRIVER_AGE} and above", StatusCodes.BadRequest);
+                return ApiResponse<DriverRegisterResponseDTO>
+                    .Failure(
+                        validatePasswordAndAgeInputs.Message, validatePasswordAndAgeInputs.StatusCode
+                    );
             }
-
-            //hash password
-            var hashedPassword = _authenticationHelper.HashPassword(registerRequest.Password).Data;
+            //pass in hashedPassword from validate method response
+            string hashedPassword = validatePasswordAndAgeInputs.Data;
 
             using var transaction = _driverCommandRepository.BeginTransaction();
+            bool isCommitted = false;
             try
             {
-                //create bus
-                BusCapacity[] capacities = Enum.GetValues<BusCapacity>();
-                BusCapacity randomSize = capacities[Random.Shared.Next(capacities.Length)];
-                
-                var availableRoute = await _routeQueryRepository.FindByCriteriaAsync("BusAssigned", "false");
-                bool hasValidRoute = availableRoute != null && availableRoute.Id > 0;
-                
-                //Create new bus for driver
-                var bus = new Bus
-                {
-                    SeatCapacity = randomSize,
-                    RouteId = hasValidRoute ? availableRoute.Id : null
-                };
-                int busId = await _busCommandRepository.AddWithOpenDBTransaction(bus, transaction);
+                //Check and Get if there is an available bus
+                var availableBus = await _busQueryRepository.FindByCriteriaAsync("DriverAssigned", "false");
+                bool hasValidBus = availableBus != null && availableBus.Id > 0;
 
-                //Update Route BusAssigned Flag if route ewas given to bus
-                if (hasValidRoute)
-                {
-                    availableRoute.BusAssigned = true;
-                    await _routeCommandRepository.UpdateWithOpenDbTransactionAsync(availableRoute, transaction);
-                }
-
-                //create driver after bus creation
+                //create driver
                 var driver = new Driver
                 {
                     FirstName = registerRequest.FirstName,
                     LastName = registerRequest.LastName,
                     Age = registerRequest.Age,
                     Email = registerRequest.Email,
+                    PhoneNumber = registerRequest.PhoneNumber,
+                    BusId = hasValidBus ? availableBus.Id : null,
                     HashedPassword = hashedPassword,
-                    BusId = busId,
-                    Status = hasValidRoute ? AccountStatus.Active : AccountStatus.Pending
+                    Status = !hasValidBus 
+                        ? DriverAccountStatus.PendingBus
+                        : (availableBus.RouteId > 0 ? DriverAccountStatus.Active : DriverAccountStatus.PendingRoute)
                 };
                 await _driverCommandRepository.AddWithOpenDBTransaction(driver, transaction);
 
-                //commit the transaction
+                //update Bus if available bus assigned
+                if (hasValidBus)
+                {
+                    availableBus.DriverAssigned = true;
+                    availableBus.Status = availableBus.RouteId != null ? BusStatus.Active : BusStatus.PendingRoute;
+                    await _busCommandRepository.UpdateWithOpenDbTransactionAsync(availableBus, transaction);
+                }
+
                 _driverCommandRepository.CommitTransaction(transaction);
+                isCommitted = true;
 
                 return ApiResponse<DriverRegisterResponseDTO>.Success(
                     "Driver Registration Completed",
@@ -155,14 +146,18 @@ public class DriverAuthenticationService : IDriverAuthenticationService
                     {
                         FirstName = driver.FirstName,
                         LastName = driver.LastName,
-                        BusAssigned = driver.BusId != 0,
-                        Status = driver.Status
+                        PhoneNumber = driver.PhoneNumber,
+                        Status = driver.Status,
+                        AssignedBus = hasValidBus ? driver.Bus.PlateNumber : null
                     }
                 );
+
             }
             catch (Exception e)
             {
-                _driverCommandRepository.RollbackTransaction(transaction);
+                if(!isCommitted)
+                    _driverCommandRepository.RollbackTransaction(transaction);
+                
                 throw;
             }
         }
@@ -172,4 +167,71 @@ public class DriverAuthenticationService : IDriverAuthenticationService
             return ApiResponse<DriverRegisterResponseDTO>.Failure(e.Message, StatusCodes.ServerError);            
         }
     }
+
+    private async Task<ApiResponse> ValidateDriverRegInputs (DriverRegisterRequestDTO request)
+    {
+        try
+        {
+            var driverExists = await _driverQueryRepository.FindByCriteriaAsync("Email", request.Email);
+            if (driverExists != null)
+            {
+                return ApiResponse
+                    .Failure(
+                        ErrorMessages.DUPLICATE_DRIVER_FOUND
+                    );
+            }
+
+            //check phone number passed is valid number
+            if (!request.PhoneNumber.All(char.IsDigit))
+            {
+                return ApiResponse
+                    .Failure(
+                        "Phone Number Invalid"
+                    );
+            }
+
+            var numberExist = await _driverQueryRepository.FindByCriteriaAsync("PhoneNumber", request.PhoneNumber);
+            if(numberExist != null)
+            {
+                return ApiResponse.Failure(ErrorMessages.DUPLICATE_PHONE_NUMBER_FOUND);
+            }
+
+            return ApiResponse.Success("Input Validation Passed");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return ApiResponse.Failure(e.Message);
+        }
+    }
+
+    private async Task<ApiResponse<string>> PasswordAndAgeCheck (DriverRegisterRequestDTO request)
+    {
+        try
+        {
+            //ensure password meets criteria
+            var passwordCheck = _authenticationHelper.ValidatePasswordRules(request.Password);
+            if (!passwordCheck.Status)
+            {
+                return ApiResponse<string>.Failure(passwordCheck.Message, StatusCodes.BadRequest);
+            }
+
+            //check age
+            if(request.Age < Rules.MIN_DRIVER_AGE)
+            {
+                return ApiResponse<string>.Failure($"Must be {Rules.MIN_DRIVER_AGE} and above", StatusCodes.BadRequest);
+            }
+
+            //hash password
+            string hashedPassword = _authenticationHelper.HashPassword(request.Password).Data;
+
+            return ApiResponse<string>.Success("Password Age validation success", hashedPassword);
+        }
+        catch (Exception e)
+        {
+            return ApiResponse<string>.Failure(e.Message, StatusCodes.BadRequest);
+        }
+    }
+        
+    
 }

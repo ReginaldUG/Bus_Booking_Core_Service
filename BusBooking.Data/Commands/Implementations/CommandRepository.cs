@@ -32,7 +32,7 @@ public class CommandRepository<TEntity> : ICommandRepository<TEntity> where TEnt
         await _executer.ExecuteCommandAsync(_connStr, query, entity);
     }
 
-    public async Task<int> AddWithOpenDBTransaction(TEntity entity, NpgsqlTransaction sqltransaction)
+    public async Task<TEntity> AddWithOpenDBTransaction(TEntity entity, NpgsqlTransaction sqltransaction)
     {
         var query = _utilities.GenerateInsertQuery<TEntity>();
         var id = await _executer.ExecuteCommandAndReturnIdAsync(
@@ -49,7 +49,7 @@ public class CommandRepository<TEntity> : ICommandRepository<TEntity> where TEnt
             idProperty.SetValue(entity, id);
         }
 
-        return id;
+        return entity;
     }
 
     public async Task UpdateWithOpenDbTransactionAsync(TEntity entity, NpgsqlTransaction sqltransaction)

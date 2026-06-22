@@ -33,7 +33,22 @@ public class QueryRepository<TEntity> : IQueryRepository<TEntity> where TEntity 
         return entities;        
     }
 
-    //Fetch sinlge record by any single search criteria
+    public async Task<IEnumerable<TEntity>> GetAllByCriteriaAsync(string propertyName, string value)
+    {
+        var query = _utilities.GenerateSelectMultipleRecordsQuery<TEntity>(propertyName, value);
+        var entities = await _executer.ExecuteReaderAsync<TEntity>(_connStr, query, param: null);
+        return entities;
+    }
+
+    public async Task<IEnumerable<TEntity>> GetLimitedByCriteriaAsync(string propertyName, string value, int limit)
+    {
+        var query = _utilities.GenerateSelectLimitedRecordsQuery<TEntity>(propertyName, value, limit);
+        var entities = await _executer.ExecuteReaderAsync<TEntity>(_connStr, query, param: null);
+        return entities;
+    }
+
+
+    //Fetch single record by any single search criteria
     public async Task<TEntity?> FindByCriteriaAsync(string propertyName, string value)
     {
         var query = _utilities.GenerateSelectSingleRecordQuery<TEntity>(propertyName, value);

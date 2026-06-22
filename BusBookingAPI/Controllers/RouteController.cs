@@ -24,4 +24,18 @@ public class RouteController : Controller
         return HttpResponseHelper.GetHttpResponse(response);
     }
 
+    [HttpPost("assign_bus")]
+    public async Task<IActionResult> AssignBus([FromBody] AssignBusRequestDTO request)
+    {
+        var response = await _routeService.AssignBusTask(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
+
+    [HttpPost("bulk_assign_bus")]
+    public async Task<IActionResult> BulkAssignBus ([FromBody] BulkAssignBusesRequestDTO request)
+    {
+        var response = await _routeService.BulkAssignBusesToRoute(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
+
 }

@@ -35,4 +35,27 @@ public class ReadUtilities : IReadUtilities
         var tableName = typeof(TEntity).GetReadTableName();
         return $"SELECT * FROM \"{tableName}\" WHERE \"{propertyName}\" = '{value.Trim()}' ORDER BY \"Id\" ASC LIMIT 1";
     }
+
+    public string GenerateSelectMultipleRecordsQuery<TEntity>(string propertyName, string? value)
+    {
+        var tableName = typeof(TEntity).GetReadTableName();
+
+        //for checks where the criteria is a property being null
+        if (value == null || value.Trim().Equals("null", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"SELECT * FROM \"{tableName}\" WHERE \"{propertyName}\" IS NULL ORDER BY \"Id\" ASC";
+        }
+        return $"SELECT * FROM \"{tableName}\" WHERE \"{propertyName}\" = '{value.Trim()}' ORDER BY \"Id\" ASC";
+    }
+
+    public string GenerateSelectLimitedRecordsQuery<TEntity>(string propertyName, string? value, int limit)
+    {
+        var tableName = typeof(TEntity).GetReadTableName();
+        //for checks where the criteria is a property being null
+        if (value == null || value.Trim().Equals("null", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"SELECT * FROM \"{tableName}\" WHERE \"{propertyName}\" IS NULL ORDER BY \"Id\" ASC LIMIT {limit}";
+        }
+        return $"SELECT * FROM \"{tableName}\" WHERE \"{propertyName}\" = '{value.Trim()}' ORDER BY \"Id\" ASC LIMIT {limit}";
+    }
 }
