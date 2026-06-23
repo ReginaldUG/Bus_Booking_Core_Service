@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BusBooking.Data")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+41375810eaaa99860341d784974ecfd4252a9fa5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c059d4f08729f47206506554139ed21501b5315e")]
 [assembly: System.Reflection.AssemblyProductAttribute("BusBooking.Data")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BusBooking.Data")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
