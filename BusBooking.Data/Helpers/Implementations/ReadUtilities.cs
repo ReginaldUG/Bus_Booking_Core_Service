@@ -58,4 +58,11 @@ public class ReadUtilities : IReadUtilities
         }
         return $"SELECT * FROM \"{tableName}\" WHERE \"{propertyName}\" = '{value.Trim()}' ORDER BY \"Id\" ASC LIMIT {limit}";
     }
+
+    public string GenerateSelectByMultipleValuesListQuery<TEntity>(string propertyName, IEnumerable<string> values)
+    {
+        var tableName = typeof(TEntity).GetReadTableName();
+        var formatValues = string.Join(", ", values.Select(v => $"'{v.Trim()}'"));
+        return $"SELECT * FROM \"{tableName}\" WHERE \"{propertyName}\" IN ({formatValues})";
+    }
 }

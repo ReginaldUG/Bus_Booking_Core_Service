@@ -31,11 +31,20 @@ public class RouteController : Controller
         return HttpResponseHelper.GetHttpResponse(response);
     }
 
-    [HttpPost("bulk_assign_bus")]
-    public async Task<IActionResult> BulkAssignBus ([FromBody] BulkAssignBusesRequestDTO request)
+    [HttpPost("assign_buses_by_count")]
+    public async Task<IActionResult> AssignBusesByCount ([FromBody] AssignBusesByCountRequestDTO request)
     {
-        var response = await _routeService.BulkAssignBusesToRoute(request);
+        var response = await _routeService.AssignBusesByCount(request);
         return HttpResponseHelper.GetHttpResponse(response);
     }
+
+    [HttpPost("assign_buses_by_plates")]
+    public async Task<IActionResult> AssignBusesByPlates ([FromBody] AssignBusesByPlatesRequestDTO request)
+    {
+        var response = await _routeService.AssignBusesByPlates(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
+
+    
 
 }

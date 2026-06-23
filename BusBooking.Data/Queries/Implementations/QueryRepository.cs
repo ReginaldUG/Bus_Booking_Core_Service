@@ -47,6 +47,15 @@ public class QueryRepository<TEntity> : IQueryRepository<TEntity> where TEntity 
         return entities;
     }
 
+    public async Task<IEnumerable<TEntity>> FindAllByMultipleValuesAsync (string propertyName, IEnumerable<string> values)
+    {
+        var cleanValues = values.Select(v => v.Trim()).ToArray();
+
+        var query = _utilities.GenerateSelectByMultipleValuesListQuery<TEntity>(propertyName, cleanValues);
+        
+        var entities = await _executer.ExecuteReaderAsync<TEntity>(_connStr, query, param: null);
+        return entities.ToList();
+    }
 
     //Fetch single record by any single search criteria
     public async Task<TEntity?> FindByCriteriaAsync(string propertyName, string value)

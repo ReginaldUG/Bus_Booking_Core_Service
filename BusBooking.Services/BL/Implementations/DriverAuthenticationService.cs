@@ -148,7 +148,7 @@ public class DriverAuthenticationService : IDriverAuthenticationService
                         LastName = driver.LastName,
                         PhoneNumber = driver.PhoneNumber,
                         Status = driver.Status,
-                        AssignedBus = hasValidBus ? driver.Bus.PlateNumber : null
+                        AssignedBus = hasValidBus ? availableBus.PlateNumber : null
                     }
                 );
 

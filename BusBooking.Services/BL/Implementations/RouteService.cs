@@ -150,30 +150,28 @@ public class RouteService : IRouteService
     }
 
     //Manual Assign Bus to route (multi bus at a time - Number of buses to assign and Route Name)
-    public async Task<ApiResponse> BulkAssignBusesToRoute (BulkAssignBusesRequestDTO request)
+    public async Task<ApiResponse> AssignBusesByCount (AssignBusesByCountRequestDTO request)
     {
         try
         {
-            //check that number passed in is above 0
+            //Validation: Ensure number passed in is valid
             if (request.NumberOfBuses <= 0)
                 return ApiResponse.Failure(ErrorMessages.INVALID_CREDENTIALS);
-            
-            //ensure number is equal or less than available unassigned buses
-            var busesAvailable = (await _busQueryRepository.GetLimitedByCriteriaAsync("RouteId", "null", request.NumberOfBuses)).ToList();
-
-            if (!busesAvailable.Any())
-                return ApiResponse.Failure("No Unassigned Buses crurently available");
-
-            if (request.NumberOfBuses > busesAvailable.Count)
-                return ApiResponse.Failure($"Requested {request.NumberOfBuses}, But only {busesAvailable.Count} unassigned Buses available");
-
-            var busesToAssign = busesAvailable.Take(request.NumberOfBuses).ToList();
             
             //ensure routeName passed exists in db
             var routeToAssign = await _routeQueryRepository.FindByCriteriaAsync("RouteName", request.RouteName);
             if (routeToAssign == null)
                 return ApiResponse.Failure(ErrorMessages.ROUTE_NOT_FOUND);
-            
+
+            //Fetch available buses within the requested limit
+            var busesToAssign = (await _busQueryRepository.GetLimitedByCriteriaAsync("RouteId", "null", request.NumberOfBuses)).ToList();
+            if (!busesToAssign.Any())
+                return ApiResponse.Failure("No Unassigned Buses crurently available");
+
+            //Validation: Ensure requested number of buses are available to be assigned
+            if (request.NumberOfBuses > busesToAssign.Count)
+                return ApiResponse.Failure($"Requested {request.NumberOfBuses}, But only {busesToAssign.Count} unassigned Buses available");
+
             //HANDLE SCENARIO
             using var transaction = _routeCommandRepository.BeginTransaction();
             bool isCommitted = false;
@@ -184,10 +182,12 @@ public class RouteService : IRouteService
                 foreach (var bus in busesToAssign)
                 {
                     //Get bus driver
-                    busDriver = await _driverQueryRepository.FindByCriteriaAsync("BusId", bus.Id.ToString());
+                    if (bus.DriverAssigned)
+                    {
+                        busDriver = await _driverQueryRepository.FindByCriteriaAsync("BusId", bus.Id.ToString());
+                    }   
                     //pass values into async function
                     await BusRouteAssigningAsync(transaction, bus, routeToAssign, busDriver);
-
                 }
                 //commit transactin outside loop
                 _routeCommandRepository.CommitTransaction(transaction);
@@ -202,7 +202,64 @@ public class RouteService : IRouteService
 
                 throw;
             }
+        }
+        catch (Exception e)
+        {
+            return ApiResponse.Failure(e.Message);
+        }
+    }
 
+    public async Task<ApiResponse> AssignBusesByPlates (AssignBusesByPlatesRequestDTO request)
+    {
+        try
+        {
+            //verify the route name
+            var routeToAssign = await _routeQueryRepository.FindByCriteriaAsync("RouteName", request.RouteName);
+            if (routeToAssign == null)
+                return ApiResponse.Failure(ErrorMessages.ROUTE_NOT_FOUND);
+            
+            //fetch all buses
+            var busesList = (await _busQueryRepository.FindAllByMultipleValuesAsync("PlateNumber", request.PlateNumbers)).ToList();
+
+            //Validation: Ensure all requested plates exist
+            if (busesList.Count != request.PlateNumbers.Count)
+                return ApiResponse.Failure("One or more plate numbers provided do not exist");
+            
+            //Validation: Prevent changing buses with existing routes assigned
+            if (busesList.Any(b => b.RouteId != null))
+                return ApiResponse.Failure("One or more selected buses alreadyn assigned to route");
+
+            //Initiate the transaction
+            using var transaction = _routeCommandRepository.BeginTransaction();
+            bool isCommitted = false;
+            try
+            {
+                //loop to go through the buesesList
+                foreach (var bus in busesList)
+                {
+                    Driver? busDriver = null;
+                    //extract driver if any assigned
+                    if (bus.DriverAssigned)
+                    {
+                        busDriver = await _driverQueryRepository.FindByCriteriaAsync("BusId", bus.Id.ToString());
+                    }                  
+
+                    //execute updates
+                    await BusRouteAssigningAsync(transaction, bus, routeToAssign, busDriver);
+                }
+                //commit transaction outside loop
+                _routeCommandRepository.CommitTransaction(transaction);
+                isCommitted = true;
+
+                return ApiResponse.Success("All buses assigned to route");
+            }
+            catch (Exception e)
+            {
+                if(!isCommitted)
+                    _routeCommandRepository.RollbackTransaction(transaction);
+                
+                throw;
+            }
         }
         catch (Exception e)
         {
