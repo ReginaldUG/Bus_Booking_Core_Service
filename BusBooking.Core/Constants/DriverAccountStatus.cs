@@ -8,5 +8,4 @@ public class DriverAccountStatus
     
     //For Driver it means pending a bus creation (driver has no bus assigned to them)
     public const string PendingBus = "pending_bus";
-    public const string PendingRoute = "pending_route";
 }

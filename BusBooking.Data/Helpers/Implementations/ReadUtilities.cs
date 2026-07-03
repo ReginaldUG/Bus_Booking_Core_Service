@@ -65,4 +65,45 @@ public class ReadUtilities : IReadUtilities
         var formatValues = string.Join(", ", values.Select(v => $"'{v.Trim()}'"));
         return $"SELECT * FROM \"{tableName}\" WHERE \"{propertyName}\" IN ({formatValues})";
     }
+
+    public string GenerateSelectByMultipleFieldsQuery<TEntity>(Dictionary<string, object> criteria, int? queryLimit)
+    {
+        var tableName = typeof(TEntity).GetReadTableName();
+        var queryBuilder = new StringBuilder($"SELECT * FROM \"{tableName}\" WHERE ");
+
+        var values = new List<string>();
+
+        foreach (var item in criteria)
+        {
+            if (item.Value == null || item.Value.ToString()?.Trim().Equals("null", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                // PostgreSQL requires "ColumnName" IS NULL
+                values.Add($"\"{item.Key}\" IS NULL");
+                continue;
+            }
+            var type = item.Value.GetType();        
+            
+            if (type.IsPrimitive || item.Value is decimal || type.IsEnum)
+            {
+                values.Add($"\"{item.Key}\" = {item.Value}");
+            }
+            else
+            {
+                values.Add($"\"{item.Key}\" = '{item.Value.ToString()?.Trim()}'");
+            }
+        }
+
+        queryBuilder.Append(string.Join(" AND ", values));
+
+        if (queryLimit != null)
+        {
+            queryBuilder.Append($" ORDER BY \"Id\" ASC LIMIT {queryLimit};");
+        }
+        else
+        {
+            queryBuilder.Append(" ORDER BY \"Id\" ASC;");
+        }
+        
+        return queryBuilder.ToString();
+    }
 }

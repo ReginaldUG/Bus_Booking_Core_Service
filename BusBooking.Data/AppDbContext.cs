@@ -13,11 +13,15 @@ namespace BusBooking.Data
         public DbSet<Route> Routes { get; set; } = null!;
         public DbSet<CustomerWallet> CustomerWallets { get; set; } = null!;
         public DbSet<CustomerWalletTransactions> CustomerWalletTransactions { get; set; } = null!;
+        public DbSet<Schedule> Schedules { get; set; } = null!;
+        public DbSet<ScheduleRules> ScheduleRules { get; set; } = null!;
         public DbSet<Booking> Bookings { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
             
             //RELATIONSHIPS
             modelBuilder.Entity<Driver>()
@@ -38,29 +42,12 @@ namespace BusBooking.Data
                 .HasForeignKey(t => t.CustomerWalletId)
                 .OnDelete(DeleteBehavior.Cascade);
             
-            modelBuilder.Entity<Bus>()
-                .HasOne(b=>b.Route)
-                .WithMany(r=>r.Buses)
-                .HasForeignKey(b=>b.RouteId)
-                .OnDelete(DeleteBehavior.Restrict);
-            
             modelBuilder.Entity<Booking>()
                 .HasOne(b=>b.Customer)
                 .WithMany(c=>c.Bookings)
                 .HasForeignKey(b=>b.CustomerId)
                 .OnDelete(DeleteBehavior.Restrict);
             
-            modelBuilder.Entity<Booking>()
-                .HasOne(booking=>booking.Bus)
-                .WithMany(bus=>bus.Bookings)
-                .HasForeignKey(booking=>booking.BusId)
-                .OnDelete(DeleteBehavior.Restrict);
-            
-            modelBuilder.Entity<Booking>()
-                .HasOne(b=>b.Route)
-                .WithMany(r=>r.Bookings)
-                .HasForeignKey(b=>b.RouteId)
-                .OnDelete(DeleteBehavior.Restrict);
             
             //INDEXES
             modelBuilder.Entity<Customer>()
@@ -86,11 +73,7 @@ namespace BusBooking.Data
                 .IsUnique();
 
             modelBuilder.Entity<Booking>()
-                .HasIndex(b => b.RouteId);
-            modelBuilder.Entity<Booking>()
                 .HasIndex(b => b.CustomerId);
-            modelBuilder.Entity<Booking>()
-                .HasIndex(b => b.BusId);
             
             //CONSTRAINTS
             modelBuilder.Entity<Booking>()

@@ -24,11 +24,4 @@ public class BusController : Controller
         var response = await _busService.CreateBusTask(request);
         return HttpResponseHelper.GetHttpResponse(response);
     }
-
-    [HttpGet("no_route")]
-    public async Task<IActionResult> GetBusesWithoutRoute()
-    {
-        var response = await _busService.GetBusesWithoutRoute();
-        return HttpResponseHelper.GetHttpResponse(response);
-    }
 }

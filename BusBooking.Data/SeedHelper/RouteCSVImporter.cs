@@ -25,16 +25,11 @@ public class RouteCSVImporter
             var parts = line.Split(",");
             var routeName = parts[1].Trim();
             var price = decimal.Parse(parts[2].Trim());
-            var type = parts[3].Trim();
-
-            var departureTime = TimeOnly.Parse(parts[4].Trim());
 
             var route = new Route
             {
                 RouteName = routeName,
-                Price = price,
-                Type = type,
-                DepartureTime = departureTime
+                Price = price
             };
             _db.Routes.Add(route);
         }

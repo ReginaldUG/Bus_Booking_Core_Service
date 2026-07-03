@@ -1,4 +1,5 @@
 using BusBooking.Core.Constants;
+using BusBooking.Core.Enums;
 using BusBooking.Models.DTO;
 
 namespace BusBookingAPI.Helpers;
@@ -26,4 +27,16 @@ public class GeneralHelpers
         return ApiResponse.Success("Valid plate number format");
     }
     
+    public ApiResponse<int> MapToWorkingDaysEnum (string day)
+    {
+        if (Enum.TryParse(day, true, out WorkingDays matchedDay))
+        {
+            int IntValue = (int)matchedDay;
+            return ApiResponse<int>.Success("matched", IntValue);
+        }
+        else
+        {
+            return ApiResponse<int>.Failure("failed to match", StatusCodes.BadRequest);
+        }
+    }
 }

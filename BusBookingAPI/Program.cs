@@ -33,7 +33,12 @@ using(var scope = app.Services.CreateScope())
         importer.Import("Seed/routes.csv");
         db.SaveChanges();
     }
-    
+    if (!db.ScheduleRules.Any())
+    {
+        var importer = new BusBooking.Data.SeedHelper.ScheduleRuleCSVImporter(db);
+        importer.Import("Seed/scheduleRules.csv");
+        db.SaveChanges();
+    }
 }
 
 if(!app.Environment.IsDevelopment())

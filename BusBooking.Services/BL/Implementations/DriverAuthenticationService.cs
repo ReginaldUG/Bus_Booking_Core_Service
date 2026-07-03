@@ -123,9 +123,9 @@ public class DriverAuthenticationService : IDriverAuthenticationService
                     PhoneNumber = registerRequest.PhoneNumber,
                     BusId = hasValidBus ? availableBus.Id : null,
                     HashedPassword = hashedPassword,
-                    Status = !hasValidBus 
-                        ? DriverAccountStatus.PendingBus
-                        : (availableBus.RouteId > 0 ? DriverAccountStatus.Active : DriverAccountStatus.PendingRoute)
+                    Status = hasValidBus 
+                        ? DriverAccountStatus.Active
+                        : DriverAccountStatus.PendingBus
                 };
                 await _driverCommandRepository.AddWithOpenDBTransaction(driver, transaction);
 
@@ -133,7 +133,7 @@ public class DriverAuthenticationService : IDriverAuthenticationService
                 if (hasValidBus)
                 {
                     availableBus.DriverAssigned = true;
-                    availableBus.Status = availableBus.RouteId != null ? BusStatus.Active : BusStatus.PendingRoute;
+                    availableBus.Status = BusStatus.Active;
                     await _busCommandRepository.UpdateWithOpenDbTransactionAsync(availableBus, transaction);
                 }
 

@@ -9,7 +9,5 @@ public class CreateRouteRequestDTO
     [Required]
     public string Type { get; set; }
     [Required]
-    public TimeOnly DepartureTime { get; set; }
-    [Required]
     public decimal Price { get; set; }
 }

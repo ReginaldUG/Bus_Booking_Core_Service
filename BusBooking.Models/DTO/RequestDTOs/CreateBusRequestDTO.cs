@@ -8,6 +8,5 @@ public class CreateBusRequestDTO
     public string BusSize { get; set; }
     [Required, StringLength(8)]
     public string PlateNumber { get; set; }
-    public string? RouteName { get; set; }
 
 }

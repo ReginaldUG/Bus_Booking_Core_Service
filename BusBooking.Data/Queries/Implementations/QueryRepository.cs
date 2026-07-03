@@ -1,4 +1,5 @@
 using BusBooking.Data.Executers.Interfaces;
+using BusBooking.Data.Extensions;
 using BusBooking.Data.Helpers.Interfaces;
 using BusBooking.Data.Queries.Interfaces;
 
@@ -57,6 +58,14 @@ public class QueryRepository<TEntity> : IQueryRepository<TEntity> where TEntity 
         return entities.ToList();
     }
 
+    public async Task<IEnumerable<TEntity>> FindByMultipleFieldsAsync(Dictionary<string, object> criteria, int? queryLimit)
+    {
+        var query = _utilities.GenerateSelectByMultipleFieldsQuery<TEntity>(criteria, queryLimit);
+
+        var entities = await _executer.ExecuteReaderAsync<TEntity>(_connStr, query, param: null);
+        return entities;
+    }
+
     //Fetch single record by any single search criteria
     public async Task<TEntity?> FindByCriteriaAsync(string propertyName, string value)
     {
@@ -72,4 +81,13 @@ public class QueryRepository<TEntity> : IQueryRepository<TEntity> where TEntity 
         var response = await _executer.ExecuteReaderAsync<long>(_connStr, query, null);
         return response.FirstOrDefault();
     }
+
+    //CUSTOM QUERY
+/*    public async Task<long> GetScheduleExistsCount (string propertyName, DateTime today)
+    {
+        var tableName = typeof(TEntity).GetReadTableName();
+        var query = $"SELECT COUNT(*) FROM \"{tableName}\" WHERE \"{propertyName}\" BETWEEN @Start AND @End";
+        var response = await _executer.ExecuteReaderAsync<long>(_connStr, query, param: new {Start = dayStart, End = dayEnd});
+        return response.FirstOrDefault();
+    }*/
 }

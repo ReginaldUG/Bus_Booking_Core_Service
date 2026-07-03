@@ -22,7 +22,14 @@ public class ReadExecuter : IReadExecuter
 
     public async Task<IEnumerable<T>> ExecuteReaderAsync<T>(string? connStr, string query, object? param)
     {
-        await using var conn = new NpgsqlConnection(connStr);
+        if (string.IsNullOrEmpty(connStr))
+            throw new ArgumentNullException(nameof(connStr), "Database connection string cannot be null or empty.");
+
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(connStr);
+        await using var dataSource = dataSourceBuilder.Build();
+
+        await using var conn = await dataSource.OpenConnectionAsync();
+
         var response = await conn.QueryAsync<T>(query, param, commandTimeout: _timeout);
         return response;
     }

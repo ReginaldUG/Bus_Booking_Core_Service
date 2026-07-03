@@ -37,8 +37,8 @@ public class WriteUtilities : IWriteUtilities
 
         var properties = typeof(TEntity).GetProperties()
             .Where(
-                p => p.Name != "Id" && (
-                    p.PropertyType == typeof(string) ||
+                p => p.Name != "Id" && p.PropertyType != typeof(DateOnly) && (
+                    p.PropertyType == typeof(string) ||                
                     Nullable.GetUnderlyingType(p.PropertyType)?.IsValueType == true ||
                     (!p.PropertyType.IsGenericType && p.PropertyType.IsValueType)
                 )

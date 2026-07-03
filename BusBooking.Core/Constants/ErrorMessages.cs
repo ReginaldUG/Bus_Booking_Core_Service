@@ -7,8 +7,9 @@ public class ErrorMessages
     public const string DUPLICATE_DRIVER_FOUND = "Driver with these credentials already exist";
     public const string DUPLICATE_PHONE_NUMBER_FOUND = "User with this number already exists";
     public const string DUPLICATE_ROUTE_FOUND = "Route with this name already exists";
-    public const string ROUTE_NOT_FOUND = "Route with this name does not exist";
+    public const string ROUTE_NOT_FOUND = "Route does not exist";
     public const string BUS_NOT_FOUND = "Bus with this number does not exist";
+    public const string SCHEDULE_NOT_FOUND = "Schedule not found";
     public const string NO_PENDING_DRIVER = "No drivers waiting on pending";
     public const string INVALID_BUS_TYPE = "Invalid bus type";
     public const string INVALID_PLATE_NUMBER = "Invalid Plate number";
