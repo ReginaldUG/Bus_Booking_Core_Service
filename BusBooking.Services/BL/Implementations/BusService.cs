@@ -85,7 +85,7 @@ public class BusService : IBusService
                 if(availableDriver != null)
                 {
                     availableDriver.BusId = newBus.Id;
-                    availableDriver.Status = AccountStatus.Active;
+                    availableDriver.Status = CustomerAccountStatus.Active;
 
                     newBus.DriverAssigned = true;
                     newBus.Status = BusStatus.Active; 

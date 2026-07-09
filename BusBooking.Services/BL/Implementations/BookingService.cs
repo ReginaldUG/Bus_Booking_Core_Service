@@ -1,0 +1,210 @@
+using BusBooking.Core.Constants;
+using BusBooking.Data.Commands.Interfaces;
+using BusBooking.Data.Queries.Interfaces;
+using BusBooking.Models.DTO;
+using BusBooking.Models.DTO.RequestDTOs;
+using BusBooking.Models.DTO.ResponseDTOs;
+using BusBooking.Models.Entities;
+using BusBooking.Services.BL.Interfaces;
+
+namespace BusBooking.Services.BL.Implementations;
+
+public class BookingService : IBookingService
+{
+    private readonly ICommandRepository<Booking> _bookingCommandRepository;
+    
+    private readonly ICommandRepository<Schedule> _scheduleCommandRepository;
+    private readonly ICommandRepository<CustomerWallet> _walletCommandRepository;
+    private readonly ICommandRepository<CustomerWalletTransactions> _txCommandRepository;
+    private readonly IQueryRepository<Booking> _bookingQueryRepository;
+    private readonly IQueryRepository<Schedule> _scheduleQueryRepository;
+    private readonly IQueryRepository<Bus> _busQueryRepository;
+    private readonly IQueryRepository<Customer> _customerQueryRepository;
+    private readonly IQueryRepository<CustomerWallet> _walletQueryRepository;
+    private readonly IQueryRepository<CustomerWalletTransactions> _txQueryRepository;
+    
+    public BookingService(IQueryRepository<Booking> bookingQueryRepository, IQueryRepository<Schedule> scheduleQueryRepository,
+        ICommandRepository<Booking> bookingCommandRepository, ICommandRepository<Schedule> scheduleCommandRepository,
+        IQueryRepository<Customer> customerQueryRepository, IQueryRepository<CustomerWallet> walletQueryRepository,
+        IQueryRepository<Bus> busQueryRepository, IQueryRepository<CustomerWalletTransactions> txQueryRepository, 
+        ICommandRepository<CustomerWallet> walletCommandRepository, ICommandRepository<CustomerWalletTransactions> txCommandRepository)
+    {
+        _bookingCommandRepository = bookingCommandRepository;
+        _scheduleCommandRepository = scheduleCommandRepository;
+        _walletCommandRepository = walletCommandRepository;
+        _txCommandRepository = txCommandRepository;
+        _scheduleQueryRepository = scheduleQueryRepository;
+        _bookingQueryRepository = bookingQueryRepository;
+        _customerQueryRepository = customerQueryRepository;
+        _walletQueryRepository = walletQueryRepository;
+        _txQueryRepository = txQueryRepository;
+        _busQueryRepository = busQueryRepository;
+    }
+
+    //check current active schedules that are scheduled and on route
+    public async Task<ApiResponse<List<GetAllActiveScheduleForTodayResponseDTO>>> GetAllActiveScheduleForToday()
+    {
+        try
+        {
+            DateTime today = DateTime.UtcNow.Date;
+            var schedules = await _scheduleQueryRepository.GetAllByCriteriaAsync(nameof(Schedule.DateOfDeparture), today.ToString("yyyy-MM-dd"));
+            if (!schedules.Any())
+            {
+                return ApiResponse<List<GetAllActiveScheduleForTodayResponseDTO>>.Failure(
+                    $"No schedules found for this day: {today}", 
+                    StatusCodes.BadRequest);
+            }
+
+            var activeSchedulesList = schedules.Where(s=> s.Status == ScheduleStatus.Scheduled && s.BusId != null).ToList();
+
+            var returnDataList = activeSchedulesList.Select(s => new GetAllActiveScheduleForTodayResponseDTO
+            {
+                ArrivalTime = s.ArrivalTime,
+                DepartureTime = s.DepartureTime,
+                RemainingSeats = s.AvailableSeats,
+                Price = s.Price,
+                Status = s.Status,
+                RouteId = s.RouteId
+            }).ToList();
+
+            return ApiResponse<List<GetAllActiveScheduleForTodayResponseDTO>>.Success(
+                "Schedules Retrieved", returnDataList);
+
+        }
+        catch (Exception e)
+        {
+            return ApiResponse<List<GetAllActiveScheduleForTodayResponseDTO>>.Failure(e.Message,
+                StatusCodes.ServerError);
+        }
+    }
+
+    //book a bus
+    public async Task<ApiResponse<BookScheduleResponseDTO>> BookSchedule(BookScheduleRequestDTO request)
+    {
+        try
+        {
+            //Validation 1: Ensure customer and Schedule records exists
+            var customer = await _customerQueryRepository.FindByIdAsync(request.CustomerId);
+            var schedule = await _scheduleQueryRepository.FindByIdAsync(request.ScheduleId);
+            if (customer == null || schedule == null)
+            {
+                string message = schedule == null ? ErrorMessages.SCHEDULE_NOT_FOUND : "Customer not found";
+                return ApiResponse<BookScheduleResponseDTO>.Failure(message, StatusCodes.BadRequest);
+            }
+                
+            //Validation 2: Ensure customer account is active
+            if (customer.Status != CustomerAccountStatus.Active)
+                return ApiResponse<BookScheduleResponseDTO>.Failure("Customer Account is not Active",
+                    StatusCodes.BadRequest);
+            
+            //Validation 3: Ensure booking time is least 5 mins away from departure time
+            DateTime scheduledDateTimeUtc = schedule.DateOfDeparture.ToDateTime(schedule.DepartureTime, DateTimeKind.Utc);
+            if (DateTime.UtcNow.AddMinutes(5) > scheduledDateTimeUtc)
+                return ApiResponse<BookScheduleResponseDTO>.Failure("Booking deadline for this schedule elapsed", StatusCodes.BadRequest);
+            
+            //Validation 4: Ensure that schedule status is valid
+            if(schedule.Status != ScheduleStatus.Scheduled)
+                return ApiResponse<BookScheduleResponseDTO>.Failure("Schedule is not available for booking", StatusCodes.BadRequest);
+            
+            //Validation 5: Ensure seating space is available
+            if (schedule.AvailableSeats < 1)
+                return ApiResponse<BookScheduleResponseDTO>.Failure("All seats are booked", StatusCodes.BadRequest);
+            
+            //Validation 6: Prevent booking duplicate slots for this customer on the same schedule ride
+            var searchParam = new Dictionary<string, object>
+            {
+                { nameof(Booking.CustomerId), request.CustomerId },
+                { nameof(Booking.ScheduleId), request.ScheduleId }
+            };
+            var duplicateEntry = await _bookingQueryRepository.FindByMultipleFieldsAsync(searchParam, null);
+            if(duplicateEntry.Any())
+                return ApiResponse<BookScheduleResponseDTO>.Failure("Customer already has a booking for this schedule", StatusCodes.BadRequest);
+            
+            //Validation 7: Ensure customer wallet has enough to pay for schedule
+            var cWallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId), request.CustomerId.ToString());
+            //check that customer has wallet record
+            if (cWallet == null)
+                return ApiResponse<BookScheduleResponseDTO>.Failure("Customer Wallet not found", StatusCodes.BadRequest);
+            //ensure balance is enough for booking
+            if(cWallet.Balance < schedule.Price)
+                return ApiResponse<BookScheduleResponseDTO>.Failure("Insufficient Wallet Balance", StatusCodes.BadRequest);
+
+            //Getting bus oject for response data
+            if (schedule.BusId == null)
+            {
+                return ApiResponse<BookScheduleResponseDTO>.Failure(
+                    "A physical bus must be assigne first to the schedule", StatusCodes.BadRequest);
+            }
+            var bus = await _busQueryRepository.FindByCriteriaAsync(nameof(Bus.Id),schedule.BusId.ToString());
+            
+            if (bus == null)    
+                return ApiResponse<BookScheduleResponseDTO>.Failure("Bus not found for schedule", StatusCodes.BadRequest);
+            
+            //TRANSACTION OPERATIONS
+            using var transaction = _bookingCommandRepository.BeginTransaction();
+            bool isCommitted = false;
+            try
+            {
+                //Update schedule seat capacity
+                schedule.AvailableSeats--;
+                await _scheduleCommandRepository.UpdateWithOpenDbTransactionAsync(schedule, transaction);
+
+                //Update customer wallet
+                cWallet.Balance -= schedule.Price;
+                cWallet.UpdatedAt = DateTime.UtcNow;
+                await _walletCommandRepository.UpdateWithOpenDbTransactionAsync(cWallet, transaction);
+
+                //Add the new Booking entry
+                var booking = new Booking
+                {
+                    CustomerId = request.CustomerId,
+                    ScheduleId = request.ScheduleId,
+                    Price = schedule.Price,
+                    IsPaid = true
+                };
+                var newBooking = await _bookingCommandRepository.AddWithOpenDBTransaction(booking, transaction);
+
+                //Update customer wallet transaction table
+                var walletTx = new CustomerWalletTransactions
+                {
+                    CustomerWalletId = cWallet.Id,
+                    Type = TransactionType.Debit,
+                    Amount = schedule.Price,
+                    Narration = $"Booking for Schedule: ID={schedule.Id}, Date={DateTime.UtcNow}"
+                };
+                var walletTransaction = await _txCommandRepository.AddWithOpenDBTransaction(walletTx, transaction);
+
+                //Save updates
+                _bookingCommandRepository.CommitTransaction(transaction);
+                isCommitted = true;
+
+                return ApiResponse<BookScheduleResponseDTO>.Success(
+                    "Ride has been Booked",
+                    new BookScheduleResponseDTO
+                    {
+                        ScheduleID = schedule.Id,
+                        DepartureTime = schedule.DepartureTime,
+                        ArrivaleTime = schedule.ArrivalTime,
+                        BusPlateNumeber = bus.PlateNumber,
+                        CustomerName = $"{customer.FirstName} {customer.LastName}"
+                    });
+            }
+            catch (Exception e)
+            {
+                if (!isCommitted)
+                    _bookingCommandRepository.RollbackTransaction(transaction);
+                throw;
+            }
+        }
+        catch (Exception e)
+        {
+            return ApiResponse<BookScheduleResponseDTO>.Failure($"Crash details: {e.Message} | Trace: {e.StackTrace}", StatusCodes.ServerError);
+        }
+    }
+
+    //cancel customer booking
+
+    //view bookings for a customer
+
+
+}

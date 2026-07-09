@@ -15,7 +15,7 @@ namespace BusBooking.Models.Entities
         public bool Completed { get; set; } = false;
         public bool IsCancelled { get; set; } = false;
         public string? CancelledBy { get; set; }
-        public bool IsPaid { get; set; }
+        public bool IsPaid { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual Customer Customer { get; set; } = null!;

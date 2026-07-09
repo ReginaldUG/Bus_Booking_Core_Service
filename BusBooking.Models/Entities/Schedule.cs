@@ -14,8 +14,9 @@ public class Schedule
     public DateOnly DateOfDeparture { get; set; }
     public TimeOnly DepartureTime { get; set; }
     public TimeOnly ArrivalTime { get; set; }
+    public decimal Price { get; set; }
     public string Status { get; set; }
-    public int? AvailableSeats {get; set; }
+    public int AvailableSeats {get; set; }
     public int CreatedFromTemplateID { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

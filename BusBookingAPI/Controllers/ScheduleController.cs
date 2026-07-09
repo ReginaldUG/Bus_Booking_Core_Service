@@ -43,6 +43,7 @@ public class ScheduleController : Controller
     {
         var response = await _scheduleService.GetScheduleForToday();
         return HttpResponseHelper.GetHttpResponse(response);
+        
     }
 
     [HttpPost("cancel_schedule")]

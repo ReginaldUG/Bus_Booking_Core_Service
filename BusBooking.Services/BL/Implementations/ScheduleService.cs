@@ -61,10 +61,10 @@ public class ScheduleService : IScheduleService
             }
 
             //Validation: Ensure EstimatedDruation is valid period
-            if(request.EstimatedDuration < Rules.MIN_ALLOWED_LEG_TIME || request.EstimatedDuration > Rules.MAX_ALLOWED__LEG_TIME)
+            if(request.EstimatedDuration < Rules.MIN_ALLOWED_LEG_TIME || request.EstimatedDuration > Rules.MAX_ALLOWED_LEG_TIME)
             {
                 return ApiResponse<AddScheduleRulesResponseDTO>.Failure(
-                    $"Invalid journey duration: Estimated travel lenght must be between {Rules.MIN_ALLOWED_LEG_TIME.TotalMinutes} minutes and {Rules.MAX_ALLOWED__LEG_TIME.TotalHours} hours",
+                    $"Invalid journey duration: Estimated travel lenght must be between {Rules.MIN_ALLOWED_LEG_TIME.TotalMinutes} minutes and {Rules.MAX_ALLOWED_LEG_TIME.TotalHours} hours",
                     StatusCodes.BadRequest);
             }
 
@@ -150,12 +150,16 @@ public class ScheduleService : IScheduleService
                 //loop through the rules and insert into as necessary
                 foreach (var rule in rules)
                 {
+                    //get their routeID price
+                    var route = await _routQueryRepository.FindByIdAsync(rule.RouteId);
+
                     var schedule = new Schedule
                     {
                         RouteId = rule.RouteId,
                         DateOfDeparture = DateOnly.FromDateTime(today),
                         DepartureTime = rule.ScheduledDepartureTime,
                         AvailableSeats = 0,
+                        Price = route.Price,
                         ArrivalTime = rule.ScheduledDepartureTime.Add(rule.EstimatedDuration, out int wrappedDays),
                         Status = ScheduleStatus.Pending,
                         CreatedFromTemplateID = rule.Id

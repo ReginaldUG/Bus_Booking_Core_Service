@@ -48,7 +48,7 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
             }
 
             //Check that Age meets Age requirements
-            if(registerRequest.Age < Rules.MIN_CUSTOMER_AGE)
+            if(registerRequest.Age < Rules.MIN_CUSTOMER_AGE  || registerRequest.Age > Rules.MAX_CUSTOMER_AGE)
             {
                 return ApiResponse<CustomerRegisterResponseDTO>.Failure($"Must be {Rules.MIN_CUSTOMER_AGE} and above", StatusCodes.BadRequest);
             }
@@ -68,7 +68,7 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
                     Email = registerRequest.Email,
                     PhoneNumber = registerRequest.PhoneNumber,
                     HashedPassword = hashedPassword,
-                    Status = AccountStatus.Active
+                    Status = CustomerAccountStatus.Active
                 };
 
                 // save and get the new customer ID
@@ -163,6 +163,106 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
             // Handle exceptions and return appropriate error response
             //Dev env: return full exception message to endpoint
             return ApiResponse<CustomerLoginResponseDTO>.Failure(e.Message, StatusCodes.ServerError );
+        }
+    }
+
+    //edit customer information
+    public async Task<ApiResponse<EditCustomerDetailsResponseDTO>> EditCustomerInformation (EditCustomerDetailsRequestDTO request)
+    {
+        try
+        {
+            //Inspect which values are actually passed in
+            string? firstName = request.FirstName?.Trim();
+            string? lastName = request.LastName?.Trim();
+            string? email = request.Email?.Trim();
+            string? age = request.Age?.Trim();
+            string? phoneNumber = request.PhoneNumber?.Trim();            
+
+            //check id
+            var customer = await _customerQueryRepository.FindByIdAsync(request.Id);
+            if (customer == null)
+                return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(ErrorMessages.INVALID_CREDENTIALS, StatusCodes.Unauthorized);
+
+            //check each value for null to handle
+            //if a value is null we skip the update in the loop
+            //validate values that need to be validated as long as not null
+            //validate new phone number
+            if (!string.IsNullOrEmpty(phoneNumber))
+            {
+                if (!phoneNumber.All(char.IsDigit) || phoneNumber.Length != 11)
+                {
+                    return ApiResponse<EditCustomerDetailsResponseDTO>.Failure("Phone number invalid", StatusCodes.Conflict);
+                }
+
+                //check that phone Number does not exist
+                var numberExists = await _customerQueryRepository.FindByCriteriaAsync(nameof(Customer.PhoneNumber), phoneNumber);
+                if (numberExists != null)
+                    return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(ErrorMessages.DUPLICATE_PHONE_NUMBER_FOUND, StatusCodes.Conflict);
+            }
+
+            //validate email address if exists
+            if (!string.IsNullOrEmpty(email))
+            {
+                //check that new email does not exist
+                var emailExist = await _customerQueryRepository.FindByCriteriaAsync(nameof(Customer.Email), email);
+                if (emailExist != null)
+                    return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(ErrorMessages.DUPLICATE_CUSTOMER_FOUND, StatusCodes.Conflict);
+            }
+
+            if (!string.IsNullOrEmpty(age))
+            {
+                int value = int.Parse(age);
+
+                if(value < Rules.MIN_CUSTOMER_AGE || value > Rules.MAX_CUSTOMER_AGE)
+                {
+                    return ApiResponse<EditCustomerDetailsResponseDTO>.Failure($"Must be {Rules.MIN_CUSTOMER_AGE} and above", StatusCodes.BadRequest);
+                }
+            }
+
+            if (string.IsNullOrEmpty(firstName) && string.IsNullOrEmpty(lastName) && string.IsNullOrEmpty(email) &&
+                string.IsNullOrEmpty(phoneNumber) && string.IsNullOrEmpty(age))
+                return ApiResponse<EditCustomerDetailsResponseDTO>.Failure("No field to update", StatusCodes.BadRequest);
+        
+            //perform updates
+            using var transaction = _customerCommandRepository.BeginTransaction();
+            bool isCommited = false;
+            try
+            {
+                //begin updates if not null
+                customer.FirstName = !string.IsNullOrEmpty(firstName) ? firstName : customer.FirstName;
+                customer.LastName = !string.IsNullOrEmpty(lastName) ? lastName : customer.LastName;
+                customer.Email = !string.IsNullOrEmpty(email) ? email : customer.Email;
+                customer.PhoneNumber = !string.IsNullOrEmpty(phoneNumber) ? phoneNumber : customer.PhoneNumber;
+
+                if (int.TryParse(age, out var numberParse))
+                    customer.Age = numberParse;
+                
+                customer.UpdatedAt = DateTime.UtcNow;
+
+                await _customerCommandRepository.UpdateWithOpenDbTransactionAsync(customer, transaction);
+                _customerCommandRepository.CommitTransaction(transaction);
+                isCommited = true;
+
+                return ApiResponse<EditCustomerDetailsResponseDTO>.Success("Customer Updated Successfully",
+                    new EditCustomerDetailsResponseDTO
+                    {
+                        Age = age,
+                        Email = email,
+                        FirstName = firstName,
+                        LastName = lastName,
+                        PhoneNumber = phoneNumber
+                    });
+            }
+            catch (Exception e)
+            {
+                if(!isCommited)
+                    _customerCommandRepository.RollbackTransaction(transaction);
+                throw;
+            }
+        }
+        catch (Exception e)
+        {
+            return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(e.Message, StatusCodes.BadRequest);
         }
     }
 
