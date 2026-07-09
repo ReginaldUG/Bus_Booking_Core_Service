@@ -15,6 +15,7 @@ public class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
         builder.Property(s => s.DepartureTime)
             .IsRequired();
         builder.Property(s => s.DateOfDeparture).IsRequired();
+        builder.Property(s => s.DateOfDeparture).HasColumnType("date");
 
         builder.Property(s => s.AvailableSeats)
             .IsRequired()

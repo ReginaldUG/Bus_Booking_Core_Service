@@ -9,7 +9,6 @@ using BusBooking.Models.DTO.ResponseDTOs;
 using BusBooking.Models.Entities;
 using BusBooking.Services.BL.Interfaces;
 using BusBookingAPI.Helpers;
-using Npgsql.Replication;
 
 namespace BusBooking.Services.BL.Implementations;
 
@@ -24,7 +23,9 @@ public class ScheduleService : IScheduleService
     private readonly GeneralHelpers _generalHelpers;
 
     public ScheduleService (IQueryRepository<Schedule> scheduleQueryRepository, 
-        IQueryRepository<ScheduleRules> rulesQueryRepository, IQueryRepository<Bus> busQueryRepository, IQueryRepository<Route> routQueryRepository,
+        IQueryRepository<ScheduleRules> rulesQueryRepository, 
+        IQueryRepository<Bus> busQueryRepository, 
+        IQueryRepository<Route> routQueryRepository,
         ICommandRepository<Schedule> scheduleCommandRepository,
         ICommandRepository<ScheduleRules> rulesCommandRepository,
         GeneralHelpers generalHelpers)
@@ -156,7 +157,7 @@ public class ScheduleService : IScheduleService
                     var schedule = new Schedule
                     {
                         RouteId = rule.RouteId,
-                        DateOfDeparture = DateOnly.FromDateTime(today),
+                        DateOfDeparture = DateTime.UtcNow.Date,
                         DepartureTime = rule.ScheduledDepartureTime,
                         AvailableSeats = 0,
                         Price = route.Price,
@@ -183,7 +184,7 @@ public class ScheduleService : IScheduleService
         }
         catch (Exception e)
         {
-            return ApiResponse.Failure(e.Message);
+            return ApiResponse.Failure($"Crash details: {e.Message} | Trace: {e.StackTrace}");
         }
     }
 
@@ -216,8 +217,8 @@ public class ScheduleService : IScheduleService
         catch (Exception e)
         {
             return ApiResponse<List<GetSchedulesForDayResponseDTO>>.Failure(
-                e.Message, 
-                StatusCodes.ServerError);
+                $"Crash details: {e.Message} | Trace: {e.StackTrace}", 
+                StatusCodes.BadRequest);
         }
     }
 
@@ -230,7 +231,6 @@ public class ScheduleService : IScheduleService
             DateTime today = DateTime.UtcNow.Date;
             var searchParams = new Dictionary<string, object>
             {
-                { nameof(Schedule.Status), ScheduleStatus.Pending },
                 { nameof(Schedule.DateOfDeparture), today.ToString("yyyy-MM-dd") }
             };
             var schedules = await _scheduleQueryRepository.FindByMultipleFieldsAsync(searchParams, null);
@@ -267,15 +267,14 @@ public class ScheduleService : IScheduleService
             }
 
             //auto assign buses to schedules
-            using var transaction = _scheduleCommandRepository.BeginTransaction();
+            await using var transaction = _scheduleCommandRepository.BeginTransaction();
             bool isCommitted = false;
             try
             {
                 var count = schedulesWithoutBus.Count;
-                Schedule? schedule = null;
                 for(int i = 0; i<count; i++)
                 {
-                    schedule = schedulesWithoutBus[i];
+                    var schedule = schedulesWithoutBus[i];
 
                     schedule.AvailableSeats = (int)availableBusesToAssign[i].SeatCapacity;
                     schedule.BusId = availableBusesToAssign[i].Id;
@@ -289,7 +288,7 @@ public class ScheduleService : IScheduleService
 
                 return ApiResponse.Success($"{count} schedules have been assigned Buses");
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 if (!isCommitted)
                     _scheduleCommandRepository.RollbackTransaction(transaction);
@@ -298,11 +297,9 @@ public class ScheduleService : IScheduleService
         }
         catch (Exception e)
         {
-            return ApiResponse.Failure(e.Message);
+            return ApiResponse.Failure($"Crash details: {e.Message} | Trace: {e.StackTrace}");
         }
     }
-
-    //unassign buses from completed/cancelled schedules
 
     //cancel a schedule
     public async Task<ApiResponse> CancelSchedule(CancelScheduleRequestDTO request)

@@ -21,13 +21,17 @@ public class BookingService : IBookingService
     private readonly IQueryRepository<Bus> _busQueryRepository;
     private readonly IQueryRepository<Customer> _customerQueryRepository;
     private readonly IQueryRepository<CustomerWallet> _walletQueryRepository;
-    private readonly IQueryRepository<CustomerWalletTransactions> _txQueryRepository;
     
-    public BookingService(IQueryRepository<Booking> bookingQueryRepository, IQueryRepository<Schedule> scheduleQueryRepository,
-        ICommandRepository<Booking> bookingCommandRepository, ICommandRepository<Schedule> scheduleCommandRepository,
-        IQueryRepository<Customer> customerQueryRepository, IQueryRepository<CustomerWallet> walletQueryRepository,
-        IQueryRepository<Bus> busQueryRepository, IQueryRepository<CustomerWalletTransactions> txQueryRepository, 
-        ICommandRepository<CustomerWallet> walletCommandRepository, ICommandRepository<CustomerWalletTransactions> txCommandRepository)
+    public BookingService(
+        IQueryRepository<Booking> bookingQueryRepository, 
+        IQueryRepository<Schedule> scheduleQueryRepository,
+        ICommandRepository<Booking> bookingCommandRepository, 
+        ICommandRepository<Schedule> scheduleCommandRepository,
+        IQueryRepository<Customer> customerQueryRepository, 
+        IQueryRepository<CustomerWallet> walletQueryRepository,
+        IQueryRepository<Bus> busQueryRepository, 
+        ICommandRepository<CustomerWallet> walletCommandRepository, 
+        ICommandRepository<CustomerWalletTransactions> txCommandRepository)
     {
         _bookingCommandRepository = bookingCommandRepository;
         _scheduleCommandRepository = scheduleCommandRepository;
@@ -37,12 +41,11 @@ public class BookingService : IBookingService
         _bookingQueryRepository = bookingQueryRepository;
         _customerQueryRepository = customerQueryRepository;
         _walletQueryRepository = walletQueryRepository;
-        _txQueryRepository = txQueryRepository;
         _busQueryRepository = busQueryRepository;
     }
 
     //check current active schedules that are scheduled and on route
-    public async Task<ApiResponse<List<GetAllActiveScheduleForTodayResponseDTO>>> GetAllActiveScheduleForToday()
+    /*public async Task<ApiResponse<List<GetAllActiveScheduleForTodayResponseDTO>>> GetAllActiveScheduleForToday()
     {
         try
         {
@@ -76,8 +79,8 @@ public class BookingService : IBookingService
             return ApiResponse<List<GetAllActiveScheduleForTodayResponseDTO>>.Failure(e.Message,
                 StatusCodes.ServerError);
         }
-    }
-
+    }*/
+    
     //book a bus
     public async Task<ApiResponse<BookScheduleResponseDTO>> BookSchedule(BookScheduleRequestDTO request)
     {
@@ -98,7 +101,9 @@ public class BookingService : IBookingService
                     StatusCodes.BadRequest);
             
             //Validation 3: Ensure booking time is least 5 mins away from departure time
-            DateTime scheduledDateTimeUtc = schedule.DateOfDeparture.ToDateTime(schedule.DepartureTime, DateTimeKind.Utc);
+            //DateTime scheduledDateTimeUtc = schedule.DateOfDeparture.ToDateTime(schedule.DepartureTime, DateTimeKind.Utc);
+            DateTime scheduledDateTimeUtc = schedule.DateOfDeparture.Date.Add(schedule.DepartureTime.ToTimeSpan());
+            scheduledDateTimeUtc = DateTime.SpecifyKind(scheduledDateTimeUtc, DateTimeKind.Utc);            
             if (DateTime.UtcNow.AddMinutes(5) > scheduledDateTimeUtc)
                 return ApiResponse<BookScheduleResponseDTO>.Failure("Booking deadline for this schedule elapsed", StatusCodes.BadRequest);
             
@@ -204,7 +209,52 @@ public class BookingService : IBookingService
 
     //cancel customer booking
 
-    //view bookings for a customer
+    //view customer bookings for today by Id
+    public async Task<ApiResponse<List<CustomerBookingByIdResponseDTO>>> GetCustomerBookingById (CustomerBookingByIdRequestDTO request)
+    {
+        try
+        {
+            var searchParams = new Dictionary<string, object>
+            {
+                {nameof(Booking.CustomerId), request.CustomerId},
+                {nameof(Booking.Completed), false}
+            };
+            var bookings = await _bookingQueryRepository.FindByMultipleFieldsAsync(searchParams, null);
+            if (!bookings.Any())
+                return ApiResponse<List<CustomerBookingByIdResponseDTO>>.Failure("Customer has no bookings",
+                    StatusCodes.BadRequest);
+            
+            var customerBooking = bookings.ToList();
+            var returnDataList = new List<CustomerBookingByIdResponseDTO>();
+
+            var scheduleIds = bookings.Select(b => b.ScheduleId.ToString());
+            //get all schedules based on id
+            var bookSchedule = await _scheduleQueryRepository.FindAllByMultipleValuesAsync(nameof(Schedule.Id), scheduleIds);
+            var scheduleList = bookSchedule.ToList();
+
+            for (int i = 0; i < customerBooking.Count; i++)
+            {
+                CustomerBookingByIdResponseDTO response = new CustomerBookingByIdResponseDTO
+                {
+                    CustomerId = customerBooking[i].CustomerId,
+                    DateOfDeparture = DateOnly.FromDateTime(scheduleList[i].DateOfDeparture),
+                    DepartureTime = scheduleList[i].DepartureTime,
+                    IsPaid = customerBooking[i].IsPaid,
+                    Price = customerBooking[i].Price
+                };
+
+                returnDataList.Add(response);
+            }
+
+            return ApiResponse<List<CustomerBookingByIdResponseDTO>>.Success(
+                "Booking retrieved",
+                returnDataList);
+        }
+        catch (Exception e)
+        {
+            return ApiResponse<List<CustomerBookingByIdResponseDTO>>.Failure(e.Message, StatusCodes.ServerError);            
+        }
+    }
 
 
 }

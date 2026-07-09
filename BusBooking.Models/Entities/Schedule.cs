@@ -11,7 +11,10 @@ public class Schedule
     public int Id { get; set; }
     public int? BusId { get; set; }
     public int RouteId { get; set; }
-    public DateOnly DateOfDeparture { get; set; }
+
+    [Column(TypeName = "date")]
+    public DateTime DateOfDeparture { get; set; }
+    
     public TimeOnly DepartureTime { get; set; }
     public TimeOnly ArrivalTime { get; set; }
     public decimal Price { get; set; }

@@ -26,6 +26,13 @@ public class QueryRepository<TEntity> : IQueryRepository<TEntity> where TEntity 
         return entities.FirstOrDefault();
     }
 
+    public async Task<IEnumerable<TEntity>> GetAllAsync()
+    {
+        var query = _utilities.GenerateSelectAll<TEntity>();
+        var entities = await _executer.ExecuteReaderAsync<TEntity>(_connStr, query, null);
+        return entities;
+    }
+
     //Fetch all records with pagination
     public async Task<IEnumerable<TEntity>> GetAllAsync(int pageSize, int pageNumber)
     {

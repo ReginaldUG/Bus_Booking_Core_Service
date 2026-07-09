@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 SqlMapper.AddTypeHandler(new TimeOnlyTypeHandler());
+SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
 
 builder.Services.AddControllers();
 

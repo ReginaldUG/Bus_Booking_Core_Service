@@ -30,6 +30,12 @@ public class ReadUtilities : IReadUtilities
         return $"SELECT * FROM \"{tableName}\" ORDER BY \"Id\" DESC LIMIT {pageSize} OFFSET {(pageNumber - 1) * pageSize}";
     }
 
+    public string GenerateSelectAll<TEntity>()
+    {
+        var tableName = typeof(TEntity).GetReadTableName();
+        return $"SELECT * FROM \"{tableName}\" ORDER BY \"Id\" ASC";
+    }
+
     public string GenerateSelectSingleRecordQuery<TEntity>(string propertyName, string value)
     {
         var tableName = typeof(TEntity).GetReadTableName();
@@ -66,6 +72,71 @@ public class ReadUtilities : IReadUtilities
         return $"SELECT * FROM \"{tableName}\" WHERE \"{propertyName}\" IN ({formatValues})";
     }
 
+    public string GenerateSelectByMultipleFieldsQuery<TEntity>(Dictionary<string, object?> criteria, int? queryLimit)
+    {
+        var tableName = typeof(TEntity).GetWriteTableName();
+        var queryBuilder = new StringBuilder($"SELECT * FROM \"{tableName}\" WHERE ");
+        var values = new List<string>();
+
+        foreach (var item in criteria)
+        {
+            //safely handle situation where checking for null values
+            if (item.Value == null || item.Value.ToString()?.Trim().Equals("null", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                values.Add($"\"{item.Key}\" IS NULL");
+                continue;
+            }
+
+            var type = item.Value.GetType();        
+
+            //CHECK DATETIME TYPES DYNAMICALLY
+            if (item.Value is DateTime dateTimeValue)
+            {
+                // Use reflection to check the property definition on the actual C# Entity Class
+                var entityProperty = typeof(TEntity).GetProperty(item.Key);
+                
+                // Check if property has explicit [Column(TypeName = "date")] attribute
+                var columnAttribute = entityProperty?.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.Schema.ColumnAttribute), true)
+                    .FirstOrDefault() as System.ComponentModel.DataAnnotations.Schema.ColumnAttribute;
+
+                if (columnAttribute != null && columnAttribute.TypeName?.Equals("date", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    // just Date Column (for schedule.DateOfDeparture) -> Format as '2026-07-09'
+                    values.Add($"\"{item.Key}\" = '{dateTimeValue:yyyy-MM-dd}'");
+                }
+                else
+                {
+                    // Full Timestamp Column -> Format it as '2026-07-09 09:34:00'
+                    values.Add($"\"{item.Key}\" = '{dateTimeValue:yyyy-MM-dd HH:mm:ss.fff}'");
+                }
+            }
+            //handle booleans to valid database boolean
+            else if (item.Value is bool boolValue)
+            {
+                values.Add($"\"{item.Key}\" = {(boolValue ? "TRUE" : "FALSE")}");
+            }
+            else if (type.IsPrimitive || item.Value is decimal || type.IsEnum)
+            {
+                values.Add($"\"{item.Key}\" = {item.Value}");
+            }
+            else
+            {
+                values.Add($"\"{item.Key}\" = '{item.Value.ToString()?.Trim()}'");
+            }
+        }
+
+        queryBuilder.Append(string.Join(" AND ", values));
+
+        if (queryLimit != null)
+            queryBuilder.Append($" ORDER BY \"Id\" ASC LIMIT {queryLimit};");
+        else
+            queryBuilder.Append(" ORDER BY \"Id\" ASC;");
+        
+        return queryBuilder.ToString();
+    }
+
+
+    /*
     public string GenerateSelectByMultipleFieldsQuery<TEntity>(Dictionary<string, object> criteria, int? queryLimit)
     {
         var tableName = typeof(TEntity).GetReadTableName();
@@ -106,4 +177,5 @@ public class ReadUtilities : IReadUtilities
         
         return queryBuilder.ToString();
     }
+    */
 }

@@ -1,4 +1,5 @@
 using BusBooking.Models.DTO.RequestDTOs;
+using BusBooking.Models.DTO.ResponseDTOs;
 using BusBooking.Services.BL.Interfaces;
 using BusBookingAPI.Helpers;
 using Microsoft.AspNetCore.Mvc;
@@ -10,10 +11,12 @@ namespace BusBookingAPI.Controllers;
 public class CustomerController : Controller
 {
     private readonly ICustomerAuthenticationService _customerAuthenticationService;
+    private readonly ITransferService _transferService;
     
-    public CustomerController(ICustomerAuthenticationService customerAuthenticationService)
+    public CustomerController(ICustomerAuthenticationService customerAuthenticationService, ITransferService transferService)
     {
         _customerAuthenticationService = customerAuthenticationService;
+        _transferService = transferService;
     }
 
     [HttpPost("register_customer")]
@@ -35,6 +38,20 @@ public class CustomerController : Controller
     public async Task<IActionResult> EditCustomer([FromBody] EditCustomerDetailsRequestDTO request)
     {
         var response = await _customerAuthenticationService.EditCustomerInformation(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
+
+    [HttpPost("fund_customer_wallet")]
+    public async Task<IActionResult> FundWallet([FromBody] CustomerWalletTopUpRequestDTO request)
+    {
+        var response = await _transferService.CustomerWalletTopUp(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
+
+    [HttpGet("wallet_balance")]
+    public async Task<IActionResult> CheckWalletBalance([FromBody] CheckWalletBalanceRequestDTO request)
+    {
+        var response = await _transferService.CheckWalletBalance(request);
         return HttpResponseHelper.GetHttpResponse(response);
     }
 }

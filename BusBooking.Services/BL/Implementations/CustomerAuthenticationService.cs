@@ -1,6 +1,5 @@
 
 using BusBooking.Core.Constants;
-using BusBooking.Data;
 using BusBooking.Data.Commands.Interfaces;
 using BusBooking.Data.Queries.Interfaces;
 using BusBooking.Models.DTO;
@@ -19,7 +18,11 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
     private readonly ICommandRepository<CustomerWallet> _walletCommandRepository;
     private readonly AuthenticationHelper _authenticationHelper;
 
-    public CustomerAuthenticationService(IQueryRepository<Customer> customerQueryRespository, ICommandRepository<Customer> customerCommandRepository, ICommandRepository<CustomerWallet> walletCommandRepository, AuthenticationHelper authenticationHelper)
+    public CustomerAuthenticationService(
+        IQueryRepository<Customer> customerQueryRespository, 
+        ICommandRepository<Customer> customerCommandRepository, 
+        ICommandRepository<CustomerWallet> walletCommandRepository, 
+        AuthenticationHelper authenticationHelper)
     {
         _customerQueryRepository = customerQueryRespository;
         _customerCommandRepository = customerCommandRepository;

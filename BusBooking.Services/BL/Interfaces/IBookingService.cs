@@ -6,6 +6,8 @@ namespace BusBooking.Services.BL.Interfaces;
 
 public interface IBookingService
 {
-    Task<ApiResponse<List<GetAllActiveScheduleForTodayResponseDTO>>> GetAllActiveScheduleForToday();
     Task<ApiResponse<BookScheduleResponseDTO>> BookSchedule(BookScheduleRequestDTO request);
+
+    Task<ApiResponse<List<CustomerBookingByIdResponseDTO>>> GetCustomerBookingById(
+        CustomerBookingByIdRequestDTO request);
 }

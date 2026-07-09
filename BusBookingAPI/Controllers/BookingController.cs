@@ -22,4 +22,11 @@ public class BookingController : Controller
         var response = await _bookingService.BookSchedule(request);
         return HttpResponseHelper.GetHttpResponse(response);
     }
+
+    [HttpGet("get_customer_booking_by_id")]
+    public async Task<IActionResult> GetCustomerBookingById([FromBody] CustomerBookingByIdRequestDTO request)
+    {
+        var response = await _bookingService.GetCustomerBookingById(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
 }

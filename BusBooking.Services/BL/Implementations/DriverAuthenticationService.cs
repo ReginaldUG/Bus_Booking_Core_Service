@@ -13,21 +13,21 @@ namespace BusBooking.Services.BL.Implementations;
 public class DriverAuthenticationService : IDriverAuthenticationService
 {
     private readonly IQueryRepository<Driver> _driverQueryRepository;
-    private readonly IQueryRepository<Route> _routeQueryRepository;
     private readonly IQueryRepository<Bus> _busQueryRepository;
     private readonly ICommandRepository<Driver> _driverCommandRepository;
     private readonly ICommandRepository<Bus> _busCommandRepository;
-    private readonly ICommandRepository<Route> _routeCommandRepository;
     private readonly AuthenticationHelper _authenticationHelper;
 
-    public DriverAuthenticationService(IQueryRepository<Driver> driverQueryRepository, IQueryRepository<Route> routeQueryRepository, IQueryRepository<Bus> busQueryRepository, ICommandRepository<Driver> driverCommandRepository, ICommandRepository<Bus> busCommandRepository, ICommandRepository<Route> routeCommandRespository, AuthenticationHelper authenticationHelper)
+    public DriverAuthenticationService(
+        IQueryRepository<Driver> driverQueryRepository, IQueryRepository<Bus> busQueryRepository, 
+        ICommandRepository<Driver> driverCommandRepository, 
+        ICommandRepository<Bus> busCommandRepository, 
+        AuthenticationHelper authenticationHelper)
     {
         _driverQueryRepository = driverQueryRepository;
-        _routeQueryRepository = routeQueryRepository;
         _busQueryRepository = busQueryRepository;
         _driverCommandRepository = driverCommandRepository;
         _busCommandRepository = busCommandRepository;
-        _routeCommandRepository = routeCommandRespository;
 
         _authenticationHelper = authenticationHelper;
     }
@@ -167,7 +167,7 @@ public class DriverAuthenticationService : IDriverAuthenticationService
             return ApiResponse<DriverRegisterResponseDTO>.Failure(e.Message, StatusCodes.ServerError);            
         }
     }
-
+    
     private async Task<ApiResponse> ValidateDriverRegInputs (DriverRegisterRequestDTO request)
     {
         try

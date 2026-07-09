@@ -8,7 +8,6 @@ using BusBooking.Models.DTO.ResponseDTOs;
 using BusBooking.Models.Entities;
 using BusBooking.Services.BL.Interfaces;
 using BusBookingAPI.Helpers;
-using Npgsql;
 
 namespace BusBooking.Services.BL.Implementations;
 
@@ -16,25 +15,13 @@ public class RouteService : IRouteService
 {
     private readonly ICommandRepository<Route> _routeCommandRepository;
     private readonly IQueryRepository<Route> _routeQueryRepository;
-    private readonly ICommandRepository<Bus> _busCommandRepository;
-    private readonly ICommandRepository<Driver> _driverCommandRepository;
-    private readonly IQueryRepository<Bus> _busQueryRepository;
-    private readonly IQueryRepository<Driver> _driverQueryRepository;
-    private readonly GeneralHelpers _generalHelpers;
 
     public RouteService(
-        ICommandRepository<Route> routeCommandRepository, ICommandRepository<Bus> busCommandRepository, 
-        ICommandRepository<Driver> driverCommandRepository, IQueryRepository<Bus> busQueryRepository, 
-        IQueryRepository<Route> routeQueryRepository, IQueryRepository<Driver> driverQueryRepository, GeneralHelpers generalHelpers)
+        ICommandRepository<Route> routeCommandRepository, 
+        IQueryRepository<Route> routeQueryRepository)
     {
         _routeCommandRepository = routeCommandRepository;
-        _busCommandRepository = busCommandRepository;
-        _driverCommandRepository = driverCommandRepository;
         _routeQueryRepository = routeQueryRepository;
-        _driverQueryRepository = driverQueryRepository;
-        _busQueryRepository = busQueryRepository;
-        
-        _generalHelpers = generalHelpers;
     }
 
     public async Task<ApiResponse<CreateRouteResponseDTO>> CreateRouteTask (CreateRouteRequestDTO request)

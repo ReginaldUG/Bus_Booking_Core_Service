@@ -4,6 +4,7 @@ public interface IQueryRepository<TEntity> where TEntity : class
 {
     Task<TEntity?> FindByIdAsync(int id);
     Task<IEnumerable<TEntity>> GetAllAsync(int pageSize, int pageNumber);
+    Task<IEnumerable<TEntity>> GetAllAsync();
     Task<IEnumerable<TEntity>> FindAllByMultipleValuesAsync(string propertyName, IEnumerable<string> values);
     Task<TEntity?> FindByCriteriaAsync(string propertyName, string value);
     Task<IEnumerable<TEntity>> FindByMultipleFieldsAsync(Dictionary<string, object> criteria, int? queryLimit);

@@ -12,11 +12,12 @@ public static class BusBookingServiceInjection
     {
         services.AddScoped<ICustomerAuthenticationService, CustomerAuthenticationService>();
         services.AddScoped<IDriverAuthenticationService, DriverAuthenticationService>();
-        services.AddScoped<IAccountEvaluationService, AccountEvaluationService>();
         services.AddScoped<IRouteService, RouteService>();
         services.AddScoped<IBusService, BusService>();
         services.AddScoped<IScheduleService, ScheduleService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<ITransferService, TransferService>();
+        services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<AuthenticationHelper>();
         services.AddScoped<GeneralHelpers>();
     }

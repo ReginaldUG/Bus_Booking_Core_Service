@@ -2,7 +2,6 @@ using BusBooking.Core.Constants;
 using BusBooking.Data.Commands.Interfaces;
 using BusBooking.Data.Queries.Interfaces;
 using BusBooking.Models.DTO;
-using BusBooking.Models.DTO.RequestDTOs;
 using BusBooking.Models.DTO.ResponseDTOs;
 using BusBooking.Models.Entities;
 using BusBooking.Services.BL.Interfaces;
@@ -24,26 +23,20 @@ public class BusService : IBusService
 {
     private readonly IQueryRepository<Bus> _busQueryRepository;
     private readonly IQueryRepository<Driver> _driverQueryRepository;
-    private readonly IQueryRepository<Route> _routeQueryRepository;
-    private readonly ICommandRepository<Route> _routeCommandRepository;
     private readonly ICommandRepository<Bus> _busCommandRepository;
     private readonly ICommandRepository<Driver> _driverCommandRepository;
     private readonly GeneralHelpers _generalHelpers;
 
-    public BusService(IQueryRepository<Bus> busQueryRepository, 
-        IQueryRepository<Driver> driverQueryRepository, 
-        IQueryRepository<Route> routeQueryRepository,
-        ICommandRepository<Bus> busCommandRepository, 
+    public BusService(IQueryRepository<Bus> busQueryRepository,
+        IQueryRepository<Driver> driverQueryRepository,
+        ICommandRepository<Bus> busCommandRepository,
         ICommandRepository<Driver> driverCommandRepository,
-        ICommandRepository<Route> routeCommandRepository,
         GeneralHelpers generalHelpers)
     {
         _busQueryRepository = busQueryRepository;
         _driverQueryRepository = driverQueryRepository;
-        _routeQueryRepository = routeQueryRepository;
         _busCommandRepository = busCommandRepository;
         _driverCommandRepository = driverCommandRepository;
-        _routeCommandRepository = routeCommandRepository;
 
         _generalHelpers = generalHelpers;
     }
