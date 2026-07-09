@@ -2,7 +2,9 @@ C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\bin\Debug\net10.0\BusBookin
 C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\bin\Debug\net10.0\BusBooking.Models.dll
 C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\bin\Debug\net10.0\BusBooking.Models.pdb
 C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\bin\Debug\net10.0\BusBooking.Core.dll
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\bin\Debug\net10.0\Npgsql.dll
 C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\bin\Debug\net10.0\BusBooking.Core.pdb
+C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\bin\Debug\net10.0\Npgsql.xml
 C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\obj\Debug\net10.0\BusBooking.Models.csproj.AssemblyReference.cache
 C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\obj\Debug\net10.0\BusBooking.Models.GeneratedMSBuildEditorConfig.editorconfig
 C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\obj\Debug\net10.0\BusBooking.Models.AssemblyInfoInputs.cache
@@ -14,5 +16,3 @@ C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\obj\Debug\net10.0\BusBookin
 C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\obj\Debug\net10.0\refint\BusBooking.Models.dll
 C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\obj\Debug\net10.0\BusBooking.Models.pdb
 C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\obj\Debug\net10.0\ref\BusBooking.Models.dll
-C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\bin\Debug\net10.0\Npgsql.dll
-C:\Dev\C#\Bus_Booking_Core_Service\BusBooking.Models\bin\Debug\net10.0\Npgsql.xml
