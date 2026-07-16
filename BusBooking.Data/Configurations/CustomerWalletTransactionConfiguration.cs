@@ -16,7 +16,5 @@ public class CustomerWalletTransactionConfiguration : IEntityTypeConfiguration<C
             .WithMany(w => w.Transactions)
             .HasForeignKey(t => t.CustomerWalletId)
             .OnDelete(DeleteBehavior.Cascade);
-        
-        
     }
 }

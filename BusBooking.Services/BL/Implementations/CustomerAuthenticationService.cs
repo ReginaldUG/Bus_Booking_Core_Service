@@ -17,18 +17,20 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
     private readonly ICommandRepository<Customer> _customerCommandRepository;
     private readonly ICommandRepository<CustomerWallet> _walletCommandRepository;
     private readonly AuthenticationHelper _authenticationHelper;
+    private readonly ITokenService _tokenService;
 
     public CustomerAuthenticationService(
-        IQueryRepository<Customer> customerQueryRespository, 
+        IQueryRepository<Customer> customerQueryRespository,
         ICommandRepository<Customer> customerCommandRepository, 
         ICommandRepository<CustomerWallet> walletCommandRepository, 
-        AuthenticationHelper authenticationHelper)
+        AuthenticationHelper authenticationHelper, ITokenService tokenService)
     {
         _customerQueryRepository = customerQueryRespository;
         _customerCommandRepository = customerCommandRepository;
         _walletCommandRepository = walletCommandRepository;
 
         _authenticationHelper = authenticationHelper;
+        _tokenService = tokenService;
     }
 
     public async Task<ApiResponse<CustomerRegisterResponseDTO>> CustomerRegisterTask (CustomerRegisterRequestDTO registerRequest)
@@ -143,6 +145,10 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
                     );
             }
 
+            var token = await _tokenService.CreateAssignAccessToken(customer.Id);
+            if (!token.Status)
+                return ApiResponse<CustomerLoginResponseDTO>.Failure("Error generating Token", StatusCodes.BadRequest);
+
             //Update Last_login field in Customer table
             customer.LastLogin = DateTime.UtcNow;
             await _customerCommandRepository.UpdateAsync(customer);
@@ -152,7 +158,7 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
                     "Login Successful",
                     new CustomerLoginResponseDTO
                     {
-                        Id = customer.Id,
+                        Token = token.Data.Token,
                         Age = customer.Age,
                         FirstName = customer.FirstName,
                         LastName = customer.LastName,
@@ -174,6 +180,13 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
     {
         try
         {
+            var requestDto = new VerifyAccessTokenRequestDTO { Token = request.Token };
+            var verify = await _tokenService.VerifyAccessToken(requestDto);
+            if (!verify.Status)
+                return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
+                    StatusCodes.BadRequest);
+            int customerId = verify.Data.CustomerId;
+            
             //Inspect which values are actually passed in
             string? firstName = request.FirstName?.Trim();
             string? lastName = request.LastName?.Trim();
@@ -182,7 +195,7 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
             string? phoneNumber = request.PhoneNumber?.Trim();            
 
             //check id
-            var customer = await _customerQueryRepository.FindByIdAsync(request.Id);
+            var customer = await _customerQueryRepository.FindByIdAsync(customerId);
             if (customer == null)
                 return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(ErrorMessages.INVALID_CREDENTIALS, StatusCodes.Unauthorized);
 
@@ -256,7 +269,7 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
                         PhoneNumber = phoneNumber
                     });
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 if(!isCommited)
                     _customerCommandRepository.RollbackTransaction(transaction);

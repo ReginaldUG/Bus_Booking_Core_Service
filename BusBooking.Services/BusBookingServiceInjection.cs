@@ -18,6 +18,7 @@ public static class BusBookingServiceInjection
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<ITransferService, TransferService>();
         services.AddScoped<IAdminService, AdminService>();
+        services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<AuthenticationHelper>();
         services.AddScoped<GeneralHelpers>();
     }

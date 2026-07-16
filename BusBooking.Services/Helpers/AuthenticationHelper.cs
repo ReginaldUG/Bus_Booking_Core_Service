@@ -9,7 +9,7 @@ public class AuthenticationHelper
     public ApiResponse<string> HashPassword(string password)
     {
         var hashed = Argon2.Hash(password);
-        return ApiResponse<string>.Success("Password hashed successfully", hashed);
+        return ApiResponse<string>.Success("Hashed successfully", hashed);
     }
 
     public ApiResponse VerifyPassword(string password, string hashedPassword)

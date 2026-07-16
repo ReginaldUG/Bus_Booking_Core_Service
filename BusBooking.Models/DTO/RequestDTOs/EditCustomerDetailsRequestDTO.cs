@@ -5,7 +5,7 @@ namespace BusBooking.Models.DTO.RequestDTOs;
 public class EditCustomerDetailsRequestDTO
 {
         [Required]
-        public required int Id { get; set; }
+        public required string Token { get; set; }
 
         public string? FirstName { get; set; }
         public string? LastName {get; set; }

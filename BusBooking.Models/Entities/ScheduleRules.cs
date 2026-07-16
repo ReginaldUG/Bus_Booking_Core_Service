@@ -1,8 +1,13 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.CompilerServices;
+using BusBooking.Core.Attributes;
 using BusBooking.Core.Enums;
 
 namespace BusBooking.Models.Entities;
 
+[Table("ScheduleRules")]
+[ReadTableName("ScheduleRules")]
+[WriteTableName("ScheduleRules")]
 public class ScheduleRules
 {
     public int Id { get; set; }

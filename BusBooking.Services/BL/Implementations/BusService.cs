@@ -58,67 +58,61 @@ public class BusService : IBusService
                 return ApiResponse<CreateBusResponseDTO>.Failure(
                     plateNumberCheck.Message, StatusCodes.BadRequest);
             
-            using var transaction = _busCommandRepository.BeginTransaction();
-            bool isCommitted = false;
-            try
+            //CreateBus
+            var newBus = new Bus
             {
-                //create bus entry
-                var bus = new Bus
-                {
-                    SeatCapacity = validBusSize.Data,
-                    PlateNumber = request.PlateNumber,
-                    Status = BusStatus.PendingDriver
-                };
-                var newBus = await _busCommandRepository.AddWithOpenDBTransaction(bus, transaction);
-                bool updateBus = false; //track if new bus needs to be updated in transaction
-                
-                //attempt driver assignment for driver with status "PendingBus"
-                //update bus driverAssigned column if valid
-                var availableDriver = await _driverQueryRepository.FindByCriteriaAsync("Status", DriverAccountStatus.PendingBus);
-                if(availableDriver != null)
-                {
-                    availableDriver.BusId = newBus.Id;
-                    availableDriver.Status = CustomerAccountStatus.Active;
+                SeatCapacity = validBusSize.Data,
+                Status = BusStatus.PendingDriver,
+                PlateNumber = request.PlateNumber
+            };
+            await _busCommandRepository.AddAsync(newBus);
 
-                    newBus.DriverAssigned = true;
-                    newBus.Status = BusStatus.Active; 
-
-                    updateBus = true;
-
-                    await _driverCommandRepository.UpdateWithOpenDbTransactionAsync(availableDriver, transaction);
-                }
-
-                if (updateBus)
-                {
-                    await _busCommandRepository.UpdateWithOpenDbTransactionAsync(newBus, transaction);
-                }
-                _busCommandRepository.CommitTransaction(transaction);
-                isCommitted = true;
-
-                return ApiResponse<CreateBusResponseDTO>.Success(
-                    "Bus Creation Completed", 
-                    new CreateBusResponseDTO
-                    {
-                        BusCapacity = newBus.SeatCapacity,
-                        Status = newBus.Status,
-                        PlateNumber = newBus.PlateNumber
-                    }
-                );
-            }
-            catch (Exception e)
+            return ApiResponse<CreateBusResponseDTO>.Success("Bus Created", new CreateBusResponseDTO
             {
-                if(!isCommitted)
-                    _busCommandRepository.RollbackTransaction(transaction);
-                throw;
-            }
+                PlateNumber = request.PlateNumber,
+                BusCapacity = validBusSize.Data,                
+                Status = BusStatus.PendingDriver
+            });
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
             return ApiResponse<CreateBusResponseDTO>.Failure(e.Message, StatusCodes.ServerError);            
         }
     }
 
+    public async Task<ApiResponse<List<GetBusListResponseDTO>>> GetBusList()
+    {
+        try
+        {
+            //get all bus list
+            var buses = (await _busQueryRepository.GetAllAsync()).ToList();
+            if (!buses.Any())
+                return ApiResponse<List<GetBusListResponseDTO>>.Success("No Buses Found", null);
+
+            var drivers = await _driverQueryRepository.GetAllAsync();
+            var driverMapping = drivers.Where(d => d.BusId.HasValue).ToDictionary(d => d.BusId!.Value);
+
+            var busList = buses.Select(b =>
+            {
+                driverMapping.TryGetValue(b.Id, out var driver);
+                return new GetBusListResponseDTO
+                {
+                    BusId = b.Id,
+                    PlateNumber = b.PlateNumber,
+                    DriverEmail = driver?.Email,
+                    SeatCapacity = b.SeatCapacity,
+                    Status = b.Status
+                };
+            }).ToList();
+
+            return ApiResponse<List<GetBusListResponseDTO>>.Success("Bus List Retrieved", busList);
+        }
+        catch (Exception e)
+        {
+            return ApiResponse<List<GetBusListResponseDTO>>.Failure(e.Message, StatusCodes.ServerError);
+        }
+    }
+    
     private ApiResponse<BusCapacity> ValidateSeatSize (string size)
     {
         BusCapacity capacity;

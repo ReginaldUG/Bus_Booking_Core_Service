@@ -115,8 +115,7 @@ public class ScheduleService : IScheduleService
     }
 
     //Service to add schedule
-    //Supposed to run in the background every day to create the daily schedule
-    
+    //Supposed to run in the background every day to create the daily schedule    
     public async Task<ApiResponse> AddScheduleJob()
     {
         try
@@ -188,6 +187,66 @@ public class ScheduleService : IScheduleService
         }
     }
 
+    public async Task<ApiResponse> AssignBusToSchedule (AssignBusToScheduleRequestDTO request)
+    {
+        try
+        {
+            //check that bus exists, has driver (is active)
+            var busParams = new Dictionary<string, object>
+            {
+                { nameof(Bus.Id), request.BusId.ToString() },
+                { nameof(Bus.Status), BusStatus.Active }
+            };
+            var busExists = (await _busQueryRepository.FindByMultipleFieldsAsync(busParams, null)).FirstOrDefault();
+            if (busExists == null)
+                return ApiResponse.Failure("Bus not valid");
+            
+            //check that bus is not assinged to any active schedule for today
+            var busScheduleParams = new Dictionary<string, object>
+            {
+                { nameof(Schedule.BusId), busExists.Id.ToString() },
+                { nameof(Schedule.DateOfDeparture), DateTime.UtcNow.Date.ToString("yyyy-MM-dd") },
+                { nameof(Schedule.Status), ScheduleStatus.Pending }
+            };
+            var busInSchedule = await _scheduleQueryRepository.FindByMultipleFieldsAsync(busScheduleParams, null);
+            if (busInSchedule.Any())
+                return ApiResponse.Failure("Bus already assigned to seperate schedule");
+            
+
+            //check thaat schedule exists and is pending
+            var scheduleParams = new Dictionary<string, object>
+            {
+                { nameof(Schedule.Id), request.ScheduleId.ToString() },
+                { nameof(Schedule.DateOfDeparture), DateTime.UtcNow.Date.ToString("yyyy-MM-dd") },
+                { nameof(Schedule.BusId), "null"},
+                { nameof(Schedule.Status), ScheduleStatus.Pending }
+            };
+            var scheduleExist = (await _scheduleQueryRepository.FindByMultipleFieldsAsync(scheduleParams, null)).FirstOrDefault();
+            if (scheduleExist == null)
+                return ApiResponse.Failure("Schedule not valid");            
+            
+            DateTime scheduledDateTimeLocal = scheduleExist.DateOfDeparture.Date.Add(scheduleExist.DepartureTime.ToTimeSpan());
+            scheduledDateTimeLocal = DateTime.SpecifyKind(scheduledDateTimeLocal, DateTimeKind.Local);
+            if (DateTime.Now.AddMinutes(10) > scheduledDateTimeLocal)
+            {
+                return ApiResponse.Failure("Schedule no longer valid for bus assignment due to departure timeframe restrictions.");
+            }
+            
+            //Assign Bus to schedule
+            scheduleExist.BusId = busExists.Id;
+            scheduleExist.Status = ScheduleStatus.Scheduled;
+            scheduleExist.AvailableSeats = (int)busExists.SeatCapacity;
+
+            await _scheduleCommandRepository.UpdateAsync(scheduleExist);
+
+            return ApiResponse.Success($"Bus '{busExists.PlateNumber}' assigned to schedule");
+        }
+        catch (Exception e)
+        {
+            return ApiResponse.Failure(e.Message);
+        }
+    }
+    
     //get schedules for the day
     public async Task<ApiResponse<List<GetSchedulesForDayResponseDTO>>> GetScheduleForToday()
     {

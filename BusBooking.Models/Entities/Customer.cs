@@ -23,5 +23,6 @@ namespace BusBooking.Models.Entities
         //Nav Properties
         public virtual CustomerWallet? Wallet { get; set; }     //Customer can have one wallet, One-To-One
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();   //One-to-Many customer can have many bokings
+        public virtual ICollection<Token> Tokens { get; set; } = new List<Token>(); 
     }
 }

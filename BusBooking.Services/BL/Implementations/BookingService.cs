@@ -21,6 +21,7 @@ public class BookingService : IBookingService
     private readonly IQueryRepository<Bus> _busQueryRepository;
     private readonly IQueryRepository<Customer> _customerQueryRepository;
     private readonly IQueryRepository<CustomerWallet> _walletQueryRepository;
+    private readonly ITokenService _tokenService;
     
     public BookingService(
         IQueryRepository<Booking> bookingQueryRepository, 
@@ -31,7 +32,7 @@ public class BookingService : IBookingService
         IQueryRepository<CustomerWallet> walletQueryRepository,
         IQueryRepository<Bus> busQueryRepository, 
         ICommandRepository<CustomerWallet> walletCommandRepository, 
-        ICommandRepository<CustomerWalletTransactions> txCommandRepository)
+        ICommandRepository<CustomerWalletTransactions> txCommandRepository, ITokenService tokenService)
     {
         _bookingCommandRepository = bookingCommandRepository;
         _scheduleCommandRepository = scheduleCommandRepository;
@@ -42,6 +43,7 @@ public class BookingService : IBookingService
         _customerQueryRepository = customerQueryRepository;
         _walletQueryRepository = walletQueryRepository;
         _busQueryRepository = busQueryRepository;
+        _tokenService = tokenService;
     }
 
     //check current active schedules that are scheduled and on route
@@ -86,8 +88,15 @@ public class BookingService : IBookingService
     {
         try
         {
+            var requestDto = new VerifyAccessTokenRequestDTO { Token = request.Token };
+            var verify = await _tokenService.VerifyAccessToken(requestDto);
+            if (!verify.Status)
+                return ApiResponse<BookScheduleResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
+                    StatusCodes.BadRequest);
+            int customerId = verify.Data.CustomerId;
+
             //Validation 1: Ensure customer and Schedule records exists
-            var customer = await _customerQueryRepository.FindByIdAsync(request.CustomerId);
+            var customer = await _customerQueryRepository.FindByIdAsync(customerId);
             var schedule = await _scheduleQueryRepository.FindByIdAsync(request.ScheduleId);
             if (customer == null || schedule == null)
             {
@@ -101,12 +110,13 @@ public class BookingService : IBookingService
                     StatusCodes.BadRequest);
             
             //Validation 3: Ensure booking time is least 5 mins away from departure time
-            //DateTime scheduledDateTimeUtc = schedule.DateOfDeparture.ToDateTime(schedule.DepartureTime, DateTimeKind.Utc);
-            DateTime scheduledDateTimeUtc = schedule.DateOfDeparture.Date.Add(schedule.DepartureTime.ToTimeSpan());
-            scheduledDateTimeUtc = DateTime.SpecifyKind(scheduledDateTimeUtc, DateTimeKind.Utc);            
-            if (DateTime.UtcNow.AddMinutes(5) > scheduledDateTimeUtc)
+            DateTime scheduledDateTimeLocal = schedule.DateOfDeparture.Date.Add(schedule.DepartureTime.ToTimeSpan());
+            scheduledDateTimeLocal = DateTime.SpecifyKind(scheduledDateTimeLocal, DateTimeKind.Local);
+            if (DateTime.Now.AddMinutes(5) > scheduledDateTimeLocal)
+            {
                 return ApiResponse<BookScheduleResponseDTO>.Failure("Booking deadline for this schedule elapsed", StatusCodes.BadRequest);
-            
+            }
+
             //Validation 4: Ensure that schedule status is valid
             if(schedule.Status != ScheduleStatus.Scheduled)
                 return ApiResponse<BookScheduleResponseDTO>.Failure("Schedule is not available for booking", StatusCodes.BadRequest);
@@ -118,7 +128,7 @@ public class BookingService : IBookingService
             //Validation 6: Prevent booking duplicate slots for this customer on the same schedule ride
             var searchParam = new Dictionary<string, object>
             {
-                { nameof(Booking.CustomerId), request.CustomerId },
+                { nameof(Booking.CustomerId), customerId },
                 { nameof(Booking.ScheduleId), request.ScheduleId }
             };
             var duplicateEntry = await _bookingQueryRepository.FindByMultipleFieldsAsync(searchParam, null);
@@ -126,7 +136,7 @@ public class BookingService : IBookingService
                 return ApiResponse<BookScheduleResponseDTO>.Failure("Customer already has a booking for this schedule", StatusCodes.BadRequest);
             
             //Validation 7: Ensure customer wallet has enough to pay for schedule
-            var cWallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId), request.CustomerId.ToString());
+            var cWallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId), customerId.ToString());
             //check that customer has wallet record
             if (cWallet == null)
                 return ApiResponse<BookScheduleResponseDTO>.Failure("Customer Wallet not found", StatusCodes.BadRequest);
@@ -162,7 +172,7 @@ public class BookingService : IBookingService
                 //Add the new Booking entry
                 var booking = new Booking
                 {
-                    CustomerId = request.CustomerId,
+                    CustomerId = customerId,
                     ScheduleId = request.ScheduleId,
                     Price = schedule.Price,
                     IsPaid = true
@@ -194,7 +204,7 @@ public class BookingService : IBookingService
                         CustomerName = $"{customer.FirstName} {customer.LastName}"
                     });
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 if (!isCommitted)
                     _bookingCommandRepository.RollbackTransaction(transaction);

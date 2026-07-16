@@ -16,6 +16,7 @@ namespace BusBooking.Data
         public DbSet<Schedule> Schedules { get; set; } = null!;
         public DbSet<ScheduleRules> ScheduleRules { get; set; } = null!;
         public DbSet<Booking> Bookings { get; set; } = null!;
+        public DbSet<Token> Tokens { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -23,7 +24,7 @@ namespace BusBooking.Data
 
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
             
-            //RELATIONSHIPS
+            /*//RELATIONSHIPS
             modelBuilder.Entity<Driver>()
                 .HasOne(d => d.Bus)
                 .WithOne(b => b.Driver)
@@ -90,6 +91,7 @@ namespace BusBooking.Data
                 .ToTable(t => t.HasCheckConstraint(
                     "chk_Route_Price", $"\"Price\" >= {Rules.MIN_ROUTE_PRICE}"
                 ));
+                */
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())

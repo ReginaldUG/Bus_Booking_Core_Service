@@ -13,5 +13,6 @@ public class ErrorMessages
     public const string NO_PENDING_DRIVER = "No drivers waiting on pending";
     public const string INVALID_BUS_TYPE = "Invalid bus type";
     public const string INVALID_PLATE_NUMBER = "Invalid Plate number";
+    public const string INVALID_TOKEN = "Invalid Token";
     public const string DUPLICATE_PLATE_NUMBER_FOUND = "Bus with Plate number already exists";
 }

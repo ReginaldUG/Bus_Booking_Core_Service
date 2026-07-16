@@ -1,7 +1,7 @@
 namespace BusBooking.Models.DTO.RequestDTOs;
 
-public class BookScheduleRequestDTO
+public class AssignBusToScheduleRequestDTO
 {
-    public string Token { get; set; }
+    public int BusId { get; set; }
     public int ScheduleId { get; set; }
 }

@@ -20,7 +20,5 @@ public class DriverConfiguration : IEntityTypeConfiguration<Driver>
         //INDEXES
         builder.HasIndex(d => d.Email).IsUnique();
         builder.HasIndex(d => d.PhoneNumber).IsUnique();
-
-        
     }
 }
