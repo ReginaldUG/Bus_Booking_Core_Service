@@ -31,6 +31,14 @@ public class WriteUtilities : IWriteUtilities
         return insertQuery.ToString();
     }
 
+    public string GenerateDeleteQuery<TEntity>(string propertyName, string value) where TEntity : class
+    {
+        var tableName = typeof(TEntity).GetWriteTableName();
+        var deleteQuery = $"DELETE FROM \"{tableName}\" WHERE \"{propertyName}\"='{value}'";
+
+        return deleteQuery;
+    }
+
     public string GenerateUpdateQuery<TEntity>() where TEntity : class
     {
         var tableName = typeof(TEntity).GetWriteTableName();

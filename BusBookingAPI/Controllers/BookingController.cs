@@ -29,4 +29,11 @@ public class BookingController : Controller
         var response = await _bookingService.GetCustomerBookingById(request);
         return HttpResponseHelper.GetHttpResponse(response);
     }
+
+    [HttpGet("booking_manifest")]
+    public async Task<IActionResult> GetCustomerBookingBusManifest([FromBody] CustomerBookingBusManifestRequestDTO request)
+    {
+        var response = await _bookingService.GetCustomerBookingBusManifest(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
 }

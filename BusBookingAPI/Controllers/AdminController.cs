@@ -10,14 +10,20 @@ namespace BusBookingAPI.Controllers;
 public class AdminController : Controller
 {
     private readonly IAdminService _adminService;
+    private readonly ICustomerAuthenticationService _customerAuthenticationService;
     private readonly IScheduleService _scheduleService;
+    private readonly EmailHelper _emailHelper;
     private readonly IBusService _busService;
 
-    public AdminController (IAdminService adminService, IBusService busService, IScheduleService scheduleService)
+    public AdminController (IAdminService adminService, IBusService busService, 
+        EmailHelper emailHelper, IScheduleService scheduleService,
+        ICustomerAuthenticationService customerAuthenticationService)
     {
         _adminService = adminService;
         _scheduleService = scheduleService;
         _busService = busService;
+        _emailHelper = emailHelper;
+        _customerAuthenticationService = customerAuthenticationService;
     }
 
     [HttpGet("get_all_customers")]
@@ -54,5 +60,21 @@ public class AdminController : Controller
         var response = await _scheduleService.AssignBusToSchedule(request);
         return HttpResponseHelper.GetHttpResponse(response);
     }
+
+    [HttpPost("send_otp")]
+    public async Task<IActionResult> SendOtp (SendOtpRequestDTO request)
+    {
+        var response = await _emailHelper.SendOtp(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+
+    }
+
+    [HttpPut("verify_customer_email")]
+    public async Task<IActionResult> VerifyCustomerOtp (EmailVerificationRequestDTO request)
+    {
+        var response = await _customerAuthenticationService.CustomerRegistrationEmailVerification(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
+
 
 }

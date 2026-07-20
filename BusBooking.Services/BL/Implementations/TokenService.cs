@@ -145,6 +145,6 @@ public class TokenService : ITokenService
         catch (Exception e)
         {
             return ApiResponse<VerifyAccessTokenResponseDTO>.Failure(e.Message, StatusCodes.ServerError);
-        }        
+        }
     }
 }

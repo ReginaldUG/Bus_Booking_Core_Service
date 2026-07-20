@@ -18,12 +18,13 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
     private readonly ICommandRepository<CustomerWallet> _walletCommandRepository;
     private readonly AuthenticationHelper _authenticationHelper;
     private readonly ITokenService _tokenService;
+    private readonly EmailHelper _emailHelper;
 
     public CustomerAuthenticationService(
         IQueryRepository<Customer> customerQueryRespository,
         ICommandRepository<Customer> customerCommandRepository, 
         ICommandRepository<CustomerWallet> walletCommandRepository, 
-        AuthenticationHelper authenticationHelper, ITokenService tokenService)
+        AuthenticationHelper authenticationHelper, ITokenService tokenService, EmailHelper emailHelper)
     {
         _customerQueryRepository = customerQueryRespository;
         _customerCommandRepository = customerCommandRepository;
@@ -31,6 +32,7 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
 
         _authenticationHelper = authenticationHelper;
         _tokenService = tokenService;
+        _emailHelper = emailHelper;
     }
 
     public async Task<ApiResponse<CustomerRegisterResponseDTO>> CustomerRegisterTask (CustomerRegisterRequestDTO registerRequest)
@@ -62,6 +64,7 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
             var hashedPassword = _authenticationHelper.HashPassword(registerRequest.Password).Data;
 
             using var transaction = _customerCommandRepository.BeginTransaction();
+            bool isCommitted = false;
             try
             {
                 //PASS VALUES            
@@ -73,7 +76,7 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
                     Email = registerRequest.Email,
                     PhoneNumber = registerRequest.PhoneNumber,
                     HashedPassword = hashedPassword,
-                    Status = CustomerAccountStatus.Active
+                    Status = CustomerAccountStatus.Pending
                 };
 
                 // save and get the new customer ID
@@ -86,14 +89,22 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
                 };
                 await _walletCommandRepository.AddWithOpenDBTransaction(wallet, transaction);
 
+                //send OTP
+                var r = new SendOtpRequestDTO
+                {
+                    EmailAddress = registerRequest.Email,
+                    Name = $"{registerRequest.FirstName} {registerRequest.LastName}"
+                };
+                await _emailHelper.SendOtp(r);
+
                 //Commit all transactions
                 _customerCommandRepository.CommitTransaction(transaction);
+                isCommitted = true;
 
                 return ApiResponse<CustomerRegisterResponseDTO>.Success(
-                    "Customer Registration Complete", 
+                    "Please Verify Email Address",
                     new CustomerRegisterResponseDTO
                     {
-                        Id = customer.Id,
                         Age = customer.Age,
                         FirstName = customer.FirstName,
                         LastName = customer.LastName,
@@ -101,18 +112,49 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
                     }
                 );
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                _customerCommandRepository.RollbackTransaction(transaction);
+                if(!isCommitted)
+                    _customerCommandRepository.RollbackTransaction(transaction);
                 throw;
             }
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
-            // Handle exceptions and return appropriate error response
-            //Dev env: return full exception message to endpoint
             return ApiResponse<CustomerRegisterResponseDTO>.Failure(e.Message, StatusCodes.ServerError);
+        }
+    }
+
+    public async Task<ApiResponse> CustomerRegistrationEmailVerification (EmailVerificationRequestDTO request)
+    {
+        try
+        {
+            var customer = await _customerQueryRepository.FindByCriteriaAsync(nameof(Customer.Email), request.Email);
+            if (customer == null)
+                return ApiResponse.Failure("Customer not found");
+
+            var r = new VerifyOtpRequestDTO
+            {
+                Email = request.Email,
+                Code = request.Code
+            };
+
+            var verify = await _emailHelper.VerifyOtp(r);
+            if (!verify.Status)
+                return ApiResponse.Failure(verify.Message);
+            
+            //update Customer details
+            customer.Status = CustomerAccountStatus.Active;
+            customer.EmailValidated = true;
+            customer.UpdatedAt = DateTime.UtcNow;
+
+            await _customerCommandRepository.UpdateAsync(customer);
+
+            return ApiResponse.Success("Email Verification complete");
+        }
+        catch (Exception e)
+        {
+            return ApiResponse.Failure(e.Message);
         }
     }
 

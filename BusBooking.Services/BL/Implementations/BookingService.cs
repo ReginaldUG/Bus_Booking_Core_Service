@@ -266,5 +266,69 @@ public class BookingService : IBookingService
         }
     }
 
+    //Generate Manifest for Bus, At Time, On Day
+    public async Task<ApiResponse<List<CustomerBookingBusManifestResponseDTO>>> GetCustomerBookingBusManifest(CustomerBookingBusManifestRequestDTO request)
+    {
+        try
+        {
+            //check that bus exists
+            var bus = await _busQueryRepository.FindByIdAsync(request.BusId);
+            if (bus == null)
+                return ApiResponse<List<CustomerBookingBusManifestResponseDTO>>.Failure(ErrorMessages.BUS_NOT_FOUND,
+                    StatusCodes.BadRequest);
+            
+            //check that bus has schedule for that day at requested time
+            //ensure the string is correct format
+            var searchParams = new Dictionary<string, object>
+            {
+                { nameof(Schedule.BusId), request.BusId },
+                { nameof(Schedule.DateOfDeparture), request.Day },
+                { nameof(Schedule.DepartureTime), request.DepartureTime },
+                {nameof(Schedule.Status), ScheduleStatus.Completed}
+            };
+            var schedule = (await _scheduleQueryRepository.FindByMultipleFieldsAsync(searchParams, null)).FirstOrDefault();
+            if (schedule == null)
+                return ApiResponse<List<CustomerBookingBusManifestResponseDTO>>.Failure(
+                    ErrorMessages.SCHEDULE_NOT_FOUND, StatusCodes.BadRequest);
+            
+            //Retrieve all bookings for that scheduleId
+            var allBookings =
+                await _bookingQueryRepository.GetAllByCriteriaAsync(nameof(Booking.ScheduleId), schedule.Id.ToString());
+            if (!allBookings.Any())
+                return ApiResponse<List<CustomerBookingBusManifestResponseDTO>>.Failure("Bookings not found",
+                    StatusCodes.BadRequest);
+            var bookings = allBookings.ToList();
+
+            List<CustomerBookingBusManifestResponseDTO> customers = new List<CustomerBookingBusManifestResponseDTO>();
+            //Retrieve all customer Info for bookings
+            foreach (var booking in bookings)
+            {
+                var customer =
+                    await _customerQueryRepository.FindByCriteriaAsync(nameof(Customer.Id),
+                        booking.CustomerId.ToString());
+                if(customer==null)
+                    return ApiResponse<List<CustomerBookingBusManifestResponseDTO>>.Failure("Customer not found", StatusCodes.BadRequest);
+                
+                //fill return list
+                var c = new CustomerBookingBusManifestResponseDTO
+                {
+                    FirstName = customer.FirstName,
+                    LastName = customer.LastName,
+                    AccountStatus = customer.Status,
+                    Age = customer.Age
+                };
+                customers.Add(c);
+            }
+
+            return ApiResponse<List<CustomerBookingBusManifestResponseDTO>>.Success(
+                "Manifest Retrieved",
+                customers
+            );
+        }
+        catch (Exception e)
+        {
+            return ApiResponse<List<CustomerBookingBusManifestResponseDTO>>.Failure(e.Message, StatusCodes.ServerError);
+        }
+    }
 
 }

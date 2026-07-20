@@ -8,6 +8,9 @@ public interface IBookingService
 {
     Task<ApiResponse<BookScheduleResponseDTO>> BookSchedule(BookScheduleRequestDTO request);
 
+    Task<ApiResponse<List<CustomerBookingBusManifestResponseDTO>>> GetCustomerBookingBusManifest(
+        CustomerBookingBusManifestRequestDTO request);
+    
     Task<ApiResponse<List<CustomerBookingByIdResponseDTO>>> GetCustomerBookingById(
         CustomerBookingByIdRequestDTO request);
 }

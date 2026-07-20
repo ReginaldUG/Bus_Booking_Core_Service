@@ -15,6 +15,7 @@ namespace BusBooking.Models.Entities
         public required string Email { get; set; }
         public required string PhoneNumber { get; set; }
         public required string HashedPassword { get; set; }
+        public bool EmailValidated { get; set; } = false;
         public string Status { get; set; }
         public DateTime LastLogin { get; set; }
         public DateTime UpdatedAt { get; set; }

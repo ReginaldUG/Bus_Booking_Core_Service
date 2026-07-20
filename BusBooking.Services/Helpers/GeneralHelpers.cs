@@ -26,6 +26,12 @@ public class GeneralHelpers
         });
     }
 
+    public ApiResponse<int> TokenGenerator()
+    {
+        int token = RandomNumberGenerator.GetInt32(100000, 999999);
+        return ApiResponse<int>.Success("Token generated", token);
+    }
+
     public ApiResponse ValidatePlateNumberFormat (string plateNumber)
     {
         //Validate string length

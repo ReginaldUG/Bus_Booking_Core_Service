@@ -20,6 +20,7 @@ public static class BusBookingServiceInjection
         services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<AuthenticationHelper>();
+        services.AddScoped<EmailHelper>();
         services.AddScoped<GeneralHelpers>();
     }
 }

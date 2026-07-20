@@ -26,6 +26,12 @@ public class CommandRepository<TEntity> : ICommandRepository<TEntity> where TEnt
         await _executer.ExecuteCommandAsync(_connStr, query, entity);
     }
 
+    public async Task DeleteAsync (TEntity entity, string propertyName, string value)
+    {
+        var query = _utilities.GenerateDeleteQuery<TEntity>(propertyName, value);
+        await _executer.ExecuteCommandAsync(_connStr, query, entity);
+    }
+    
     public async Task UpdateAsync(TEntity entity)
     {
         var query = _utilities.GenerateUpdateQuery<TEntity>();
