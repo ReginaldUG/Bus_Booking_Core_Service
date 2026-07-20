@@ -1107,6 +1107,10 @@
             "Isopoh.Cryptography.Argon2": {
               "target": "Package",
               "version": "[2.0.0, )"
+            },
+            "MailKit": {
+              "target": "Package",
+              "version": "[4.17.0, )"
             }
           },
           "imports": [
