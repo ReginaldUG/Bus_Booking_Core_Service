@@ -1,15 +1,13 @@
-using System.Net.Mail;
-using BusBooking.Models.DTO.RequestDTOs;
-
 using System.Net;
 using System.Net.Mail;
 using BusBooking.Core.Constants;
 using BusBooking.Data.Commands.Interfaces;
 using BusBooking.Data.Queries.Interfaces;
 using BusBooking.Models.DTO;
+using BusBooking.Models.DTO.RequestDTOs;
 using BusBooking.Models.Entities;
 
-namespace BusBookingAPI.Helpers;
+namespace BusBooking.Services.Helpers;
 
 public class EmailHelper
 {

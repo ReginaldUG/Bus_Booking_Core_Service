@@ -218,6 +218,95 @@ public class BookingService : IBookingService
     }
 
     //cancel customer booking
+    //if customer wants to cancel their booking
+    public async Task<ApiResponse> CancelCustomerBooking (CancelCustomerBookingRequestDTO request)
+    {
+        try
+        {
+            //check customer token and get customer ID
+            var requestDto = new VerifyAccessTokenRequestDTO { Token = request.Token };
+            var verify = await _tokenService.VerifyAccessToken(requestDto);
+            
+            if (!verify.Status)
+                return ApiResponse<BookScheduleResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
+                    StatusCodes.BadRequest);
+            int customerId = verify.Data.CustomerId;
+
+            //verify booking exists, is assigned to customer, has not yet departed
+            var booking = await _bookingQueryRepository.FindByCriteriaAsync(nameof(Booking.Id),request.BookingId.ToString());
+            if (booking == null)
+                return ApiResponse.Failure("Booking not Found");
+            
+            var bookingSchedule = await _scheduleQueryRepository.FindByCriteriaAsync(nameof(Schedule.Id), booking.ScheduleId.ToString());
+            if (bookingSchedule == null)
+                return ApiResponse.Failure("Booking invalid: Schedule not found");
+            
+            DateTime scheduledDateTimeLocal = bookingSchedule.DateOfDeparture.Date.Add(bookingSchedule.DepartureTime.ToTimeSpan());
+            scheduledDateTimeLocal = DateTime.SpecifyKind(scheduledDateTimeLocal, DateTimeKind.Local);
+
+            string message = booking.Completed ? "Cannot cancel a completed booking" :
+                booking.CustomerId != customerId ? "Booking not tied to customer" :
+                bookingSchedule.Status != ScheduleStatus.Scheduled ? "Schedule not valid to cancel" :
+                DateTime.Now.AddMinutes(5) > scheduledDateTimeLocal ? "Cancellation period has elapsed" : "null";
+            if (message != "null")
+                return ApiResponse.Failure(message);
+            
+            var wallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId),customerId.ToString());
+            if (wallet == null)
+                return ApiResponse.Failure("Wallet not found");
+            
+            using var transaction = _bookingCommandRepository.BeginTransaction();
+            bool isCommitted = false;
+            try
+            {
+                //Cancel booking
+                booking.IsCancelled = true;
+                booking.CancelledBy = "customer";
+                await _bookingCommandRepository.UpdateWithOpenDbTransactionAsync(booking, transaction);
+
+                //Update schedule seats
+                bookingSchedule.AvailableSeats++;
+                await _scheduleCommandRepository.UpdateWithOpenDbTransactionAsync(bookingSchedule, transaction);
+
+                //Update Customer Wallet if paid
+                if (booking.IsPaid)
+                {
+                    decimal refund = 0.9m * booking.Price;      //they get 90percent of the price refunded
+
+                    wallet.Balance += refund;
+                    wallet.UpdatedAt = DateTime.UtcNow;
+                    await _walletCommandRepository.UpdateWithOpenDbTransactionAsync(wallet, transaction);
+
+                    //Insert new Wallet Transaction
+                    var tx = new CustomerWalletTransactions
+                    {
+                        CustomerWalletId = wallet.Id,
+                        Amount = refund,
+                        Type = TransactionType.Credit,
+                        Narration = $"Refund: NGN{refund} for Cancelled Booking ID={booking.Id}"
+                    };
+                    var newTx = await _txCommandRepository.AddWithOpenDBTransaction(tx, transaction);
+                }
+
+                _bookingCommandRepository.CommitTransaction(transaction);
+                isCommitted = true;
+
+                string response = booking.IsPaid ? "Booking Cancelled, Refund processed" : "Booking Cancelled";
+
+                return ApiResponse.Success(response);
+            }
+            catch (Exception e)
+            {
+                if(!isCommitted)
+                    _bookingCommandRepository.RollbackTransaction(transaction);
+                throw;
+            }
+        }
+        catch (Exception e)
+        {
+            return ApiResponse.Failure(e.Message);
+        }
+    }
 
     //view customer bookings for today by Id
     public async Task<ApiResponse<List<CustomerBookingByIdResponseDTO>>> GetCustomerBookingById (CustomerBookingByIdRequestDTO request)

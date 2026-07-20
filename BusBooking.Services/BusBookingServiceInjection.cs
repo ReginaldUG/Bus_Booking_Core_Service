@@ -1,6 +1,6 @@
 using BusBooking.Services.BL.Implementations;
 using BusBooking.Services.BL.Interfaces;
-using BusBookingAPI.Helpers;
+using BusBooking.Services.Helpers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

@@ -4,7 +4,7 @@ using BusBooking.Core.Enums;
 using BusBooking.Models.DTO;
 using BusBooking.Models.DTO.ResponseDTOs;
 
-namespace BusBookingAPI.Helpers;
+namespace BusBooking.Services.Helpers;
 
 public class GeneralHelpers
 {

@@ -36,4 +36,11 @@ public class BookingController : Controller
         var response = await _bookingService.GetCustomerBookingBusManifest(request);
         return HttpResponseHelper.GetHttpResponse(response);
     }
+
+    [HttpPut("cancel_booking")]
+    public async Task<IActionResult> CancelCustomerBooking([FromBody] CancelCustomerBookingRequestDTO request)
+    {
+        var response = await _bookingService.CancelCustomerBooking(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
 }

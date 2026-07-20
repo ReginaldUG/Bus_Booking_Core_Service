@@ -13,4 +13,6 @@ public interface IBookingService
     
     Task<ApiResponse<List<CustomerBookingByIdResponseDTO>>> GetCustomerBookingById(
         CustomerBookingByIdRequestDTO request);
+
+    Task<ApiResponse> CancelCustomerBooking(CancelCustomerBookingRequestDTO request);
 }

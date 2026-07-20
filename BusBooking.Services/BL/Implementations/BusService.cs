@@ -5,7 +5,7 @@ using BusBooking.Models.DTO;
 using BusBooking.Models.DTO.ResponseDTOs;
 using BusBooking.Models.Entities;
 using BusBooking.Services.BL.Interfaces;
-using BusBookingAPI.Helpers;
+using BusBooking.Services.Helpers;
 
 namespace BusBooking.Services.BL.Implementations;
 
@@ -24,19 +24,16 @@ public class BusService : IBusService
     private readonly IQueryRepository<Bus> _busQueryRepository;
     private readonly IQueryRepository<Driver> _driverQueryRepository;
     private readonly ICommandRepository<Bus> _busCommandRepository;
-    private readonly ICommandRepository<Driver> _driverCommandRepository;
     private readonly GeneralHelpers _generalHelpers;
 
     public BusService(IQueryRepository<Bus> busQueryRepository,
         IQueryRepository<Driver> driverQueryRepository,
         ICommandRepository<Bus> busCommandRepository,
-        ICommandRepository<Driver> driverCommandRepository,
         GeneralHelpers generalHelpers)
     {
         _busQueryRepository = busQueryRepository;
         _driverQueryRepository = driverQueryRepository;
         _busCommandRepository = busCommandRepository;
-        _driverCommandRepository = driverCommandRepository;
 
         _generalHelpers = generalHelpers;
     }

@@ -6,7 +6,7 @@ using BusBooking.Models.DTO.RequestDTOs;
 using BusBooking.Models.DTO.ResponseDTOs;
 using BusBooking.Models.Entities;
 using BusBooking.Services.BL.Interfaces;
-using BusBookingAPI.Helpers;
+using BusBooking.Services.Helpers;
 
 namespace BusBooking.Services.BL.Implementations;
 
