@@ -24,7 +24,6 @@ namespace BusBooking.Models.DTO
                 Message = message
             };
         }
-
     }
 
     
