@@ -1,7 +1,5 @@
-using System.Data;
 using BusBooking.Core.Constants;
 using BusBooking.Data.Commands.Interfaces;
-using BusBooking.Data.Extensions;
 using BusBooking.Data.Queries.Interfaces;
 using BusBooking.Models.DTO;
 using BusBooking.Models.DTO.RequestDTOs;
@@ -278,85 +276,6 @@ public class ScheduleService : IScheduleService
             return ApiResponse<List<GetSchedulesForDayResponseDTO>>.Failure(
                 $"Crash details: {e.Message} | Trace: {e.StackTrace}", 
                 StatusCodes.BadRequest);
-        }
-    }
-
-    //assign buses to schedule
-    public async Task<ApiResponse> AddBusToScheduleForTodayJob()
-    {
-        try
-        {            
-            //get all schedules for today
-            DateTime today = DateTime.UtcNow.Date;
-            var searchParams = new Dictionary<string, object>
-            {
-                { nameof(Schedule.DateOfDeparture), today.ToString("yyyy-MM-dd") }
-            };
-            var schedules = await _scheduleQueryRepository.FindByMultipleFieldsAsync(searchParams, null);
-            if (!schedules.Any())
-            {
-                return ApiResponse<List<GetSchedulesForDayResponseDTO>>.Failure(
-                    $"No schedules found for this day: {today}", 
-                    StatusCodes.BadRequest);
-            }
-
-            //get all busIds already assigned to schedules for today
-            var assignedBusIds = schedules.Where(s=> s.BusId != null).Select(s=>s.BusId.Value).ToList();
-
-            //using the assignedBusIds, get all buses that are available (have drivers) and are not in the assignedBusIds list
-            var allAvailableBuses = await _busQueryRepository.GetAllByCriteriaAsync(nameof(Bus.DriverAssigned), true.ToString());
-            if(!allAvailableBuses.Any())
-            {
-                return ApiResponse.Failure("No available buses found");
-            }
-            
-            var availableBusesToAssign = allAvailableBuses.Where(b=>!assignedBusIds.Contains(b.Id)).ToList();
-
-            //Now get only schedules for today with no bus assigned
-            var schedulesWithoutBus = schedules.Where(s=>s.Status == ScheduleStatus.Pending && s.BusId == null).ToList();
-            if (!schedulesWithoutBus.Any())
-                return ApiResponse.Failure("No unassigned schedule today");
-
-            //ensure number of availableBuses is equal or greater than the number of schedules for today
-            if(availableBusesToAssign.Count < schedulesWithoutBus.Count)
-            {
-                return ApiResponse.Failure(
-                    $"Not enough available buses to assign to schedules: Available Buses: {availableBusesToAssign.Count}, Schedules without bus: {schedulesWithoutBus.Count}"
-                    );
-            }
-
-            //auto assign buses to schedules
-            await using var transaction = _scheduleCommandRepository.BeginTransaction();
-            bool isCommitted = false;
-            try
-            {
-                var count = schedulesWithoutBus.Count;
-                for(int i = 0; i<count; i++)
-                {
-                    var schedule = schedulesWithoutBus[i];
-
-                    schedule.AvailableSeats = (int)availableBusesToAssign[i].SeatCapacity;
-                    schedule.BusId = availableBusesToAssign[i].Id;
-                    schedule.Status = ScheduleStatus.Scheduled;
-
-                    await _scheduleCommandRepository.UpdateWithOpenDbTransactionAsync(schedule, transaction);
-                    //await _customCommandRepository.UpdateAssignBusesToScheduleAsync(schedulesWithoutBus[i].Id, availableBusesToAssign[i], transaction);
-                }
-                _scheduleCommandRepository.CommitTransaction(transaction);
-                isCommitted = true;
-
-                return ApiResponse.Success($"{count} schedules have been assigned Buses");
-            }
-            catch (Exception)
-            {
-                if (!isCommitted)
-                    _scheduleCommandRepository.RollbackTransaction(transaction);
-                throw;
-            }
-        }
-        catch (Exception e)
-        {
-            return ApiResponse.Failure($"Crash details: {e.Message} | Trace: {e.StackTrace}");
         }
     }
 

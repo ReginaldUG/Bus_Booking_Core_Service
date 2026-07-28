@@ -16,5 +16,6 @@ namespace BusBooking.Models.Entities
 
         public virtual ICollection<ScheduleRules> ScheduleRules { get; set; } = new List<ScheduleRules>();
         public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
+        public virtual ICollection<RouteStops> RouteStops { get; set; } = new List<RouteStops>();
     }
 }

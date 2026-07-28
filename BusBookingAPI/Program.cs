@@ -34,10 +34,23 @@ using(var scope = app.Services.CreateScope())
         importer.Import("Seed/routes.csv");
         db.SaveChanges();
     }
+    if (!db.BusStops.Any())
+    {
+        var importer = new BusBooking.Data.SeedHelper.BusStopsCSVImporter(db);
+        importer.Import("Seed/busStops.csv");
+        db.SaveChanges();
+    }
     if (!db.ScheduleRules.Any())
     {
         var importer = new BusBooking.Data.SeedHelper.ScheduleRuleCSVImporter(db);
         importer.Import("Seed/scheduleRules.csv");
+        db.SaveChanges();
+    }
+    
+    if (!db.RouteStops.Any())
+    {
+        var importer = new BusBooking.Data.SeedHelper.RouteStopsCSVImporter(db);
+        importer.Import("Seed/routeStops.csv");
         db.SaveChanges();
     }
 }

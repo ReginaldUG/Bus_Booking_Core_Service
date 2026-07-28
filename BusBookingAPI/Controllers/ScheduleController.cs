@@ -31,13 +31,6 @@ public class ScheduleController : Controller
         return HttpResponseHelper.GetHttpResponse(response);
     }
 
-    [HttpPost("assign_schedule_buses")]
-    public async Task<IActionResult> AssignScheduleBuses()
-    {
-        var response = await _scheduleService.AddBusToScheduleForTodayJob();
-        return HttpResponseHelper.GetHttpResponse(response);
-    }
-
     [HttpGet("get_today_schedule")]
     public async Task<IActionResult> GetTodaySchedule()
     {

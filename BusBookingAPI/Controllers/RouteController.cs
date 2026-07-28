@@ -23,6 +23,13 @@ public class RouteController : Controller
 
         return HttpResponseHelper.GetHttpResponse(response);
     }
+
+    [HttpPost("add_route_stop")]
+    public async Task<IActionResult> AddRouteStop([FromBody] AddRouteBusStopRequestDTO request)
+    {
+        var response = await _routeService.AddRouteBusStopTask(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
     
 
 }

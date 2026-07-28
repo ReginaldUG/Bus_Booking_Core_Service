@@ -6,5 +6,5 @@ public class BookScheduleResponseDTO
     public TimeOnly DepartureTime { get; set; }
     public TimeOnly ArrivaleTime { get; set; }
     public string CustomerName { get; set; }
-    public string BusPlateNumeber { get; set; }
+    public string BusPlateNumber { get; set; }
 }

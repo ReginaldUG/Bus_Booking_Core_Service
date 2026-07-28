@@ -1,4 +1,3 @@
-using System.Data;
 using BusBooking.Core.Constants;
 using BusBooking.Data.Commands.Interfaces;
 using BusBooking.Data.Queries.Interfaces;
@@ -14,13 +13,20 @@ public class RouteService : IRouteService
 {
     private readonly ICommandRepository<Route> _routeCommandRepository;
     private readonly IQueryRepository<Route> _routeQueryRepository;
+    private readonly IQueryRepository<BusStops> _busStopQueryRepository;
+    private readonly IQueryRepository<RouteStops> _routeStopQueryRepository;
+    private readonly ICommandRepository<RouteStops> _routeStopCommandRepository;
 
     public RouteService(
-        ICommandRepository<Route> routeCommandRepository, 
-        IQueryRepository<Route> routeQueryRepository)
+        ICommandRepository<Route> routeCommandRepository, IQueryRepository<BusStops> busStopQueryRepository,
+        IQueryRepository<Route> routeQueryRepository, IQueryRepository<RouteStops> routeStopQueryRepository,
+        ICommandRepository<RouteStops> routeStopCommandRepository)
     {
         _routeCommandRepository = routeCommandRepository;
         _routeQueryRepository = routeQueryRepository;
+        _busStopQueryRepository = busStopQueryRepository;
+        _routeStopQueryRepository = routeStopQueryRepository;
+        _routeStopCommandRepository = routeStopCommandRepository;
     }
 
     public async Task<ApiResponse<CreateRouteResponseDTO>> CreateRouteTask (CreateRouteRequestDTO request)
@@ -58,5 +64,51 @@ public class RouteService : IRouteService
             return ApiResponse<CreateRouteResponseDTO>.Failure(
                 $"{e}", StatusCodes.ServerError);
         }
+    }
+
+    //Add new Route Stop (route bus stop relationship)
+    public async Task<ApiResponse<AddRouteBusStopResponseDTO>> AddRouteBusStopTask (AddRouteBusStopRequestDTO request)
+    {
+        try
+        {
+            //check that route exists
+            var busStop = await _busStopQueryRepository.FindByIdAsync(request.BusStopId);
+            if (busStop == null)
+                return ApiResponse<AddRouteBusStopResponseDTO>.Failure(ErrorMessages.BUS_STOP_NOT_FOUND,
+                    StatusCodes.BadRequest);
+            var route = await _routeQueryRepository.FindByIdAsync(request.RouteId);
+            if (route == null)
+                return ApiResponse<AddRouteBusStopResponseDTO>.Failure(ErrorMessages.ROUTE_NOT_FOUND,
+                    StatusCodes.BadRequest);
+            
+            //check that bus stop and route dont already exist
+            var searchParams = new Dictionary<string, object>
+            {
+                { nameof(RouteStops.BusStopId), request.BusStopId },
+                { nameof(RouteStops.RouteId), request.RouteId }
+            };
+            var exist = await _routeStopQueryRepository.FindByMultipleFieldsAsync(searchParams, 1);
+            if (exist.Any())
+                return ApiResponse<AddRouteBusStopResponseDTO>.Failure(ErrorMessages.DUPLICATE_ENTRY, StatusCodes.Conflict);
+            
+            //save
+            var newRouteStop = new RouteStops
+            {
+                BusStopId = request.BusStopId,
+                RouteId = request.RouteId
+            };
+            await _routeStopCommandRepository.AddAsync(newRouteStop);
+
+            return ApiResponse<AddRouteBusStopResponseDTO>.Success("New Stop Added to Route", new AddRouteBusStopResponseDTO
+            {
+                BusStopName = busStop.Name,
+                RouteName = route.RouteName
+            });
+        }
+        catch (Exception e)
+        {
+            return ApiResponse<AddRouteBusStopResponseDTO>.Failure(e.Message, StatusCodes.ServerError);
+        }
+        
     }
 }

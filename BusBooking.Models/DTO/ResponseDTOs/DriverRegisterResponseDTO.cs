@@ -6,5 +6,4 @@ public class DriverRegisterResponseDTO
     public string LastName { get; set; }
     public string PhoneNumber { get; set; }
     public string Status { get; set; }
-    public string? AssignedBus { get; set; }
 }

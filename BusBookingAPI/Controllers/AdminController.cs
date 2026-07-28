@@ -73,7 +73,7 @@ public class AdminController : Controller
     [HttpPut("verify_customer_email")]
     public async Task<IActionResult> VerifyCustomerOtp (EmailVerificationRequestDTO request)
     {
-        var response = await _customerAuthenticationService.CustomerRegistrationEmailVerification(request);
+        var response = await _customerAuthenticationService.CustomerEmailVerification(request);
         return HttpResponseHelper.GetHttpResponse(response);
     }
 

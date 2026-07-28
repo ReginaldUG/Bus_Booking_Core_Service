@@ -21,6 +21,16 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .WithMany(s => s.Bookings)
             .HasForeignKey(b => b.ScheduleId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(b => b.PickUpStop)
+            .WithMany()
+            .HasForeignKey(b => b.PickUpStopId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(b => b.DropOffStop)
+            .WithMany()
+            .HasForeignKey(b => b.DropOffStopId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         //INDEXES
         builder.HasIndex(b => b.ScheduleId);
@@ -32,5 +42,8 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.ToTable(t => t.HasCheckConstraint(
             "chk_CancelledBy_Condition",
             "(\"IsCancelled\" = true AND \"CancelledBy\" IN ('customer', 'driver')) OR (\"IsCancelled\" = false AND \"CancelledBy\" IS NULL)"));
+        builder.ToTable(t => t.HasCheckConstraint(
+            "chk_Different_Stops",
+            "(\"PickUpStopId\" <> \"DropOffStopId\")"));
     }
 }

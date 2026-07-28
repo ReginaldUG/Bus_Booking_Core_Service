@@ -1,4 +1,5 @@
 
+using System.Runtime.InteropServices.JavaScript;
 using BusBooking.Core.Constants;
 using BusBooking.Data.Commands.Interfaces;
 using BusBooking.Data.Queries.Interfaces;
@@ -15,6 +16,8 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
 {
     private readonly IQueryRepository<Customer> _customerQueryRepository;
     private readonly ICommandRepository<Customer> _customerCommandRepository;
+    private readonly IQueryRepository<Token> _tokenQueryRepository;
+    private readonly ICommandRepository<Token> _tokenCommandRepository;
     private readonly ICommandRepository<CustomerWallet> _walletCommandRepository;
     private readonly AuthenticationHelper _authenticationHelper;
     private readonly ITokenService _tokenService;
@@ -23,12 +26,16 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
     public CustomerAuthenticationService(
         IQueryRepository<Customer> customerQueryRespository,
         ICommandRepository<Customer> customerCommandRepository, 
-        ICommandRepository<CustomerWallet> walletCommandRepository, 
+        ICommandRepository<CustomerWallet> walletCommandRepository,
+        ICommandRepository<Token> tokenCommandRepository,
+        IQueryRepository<Token> tokenQueryRepository,
         AuthenticationHelper authenticationHelper, ITokenService tokenService, EmailHelper emailHelper)
     {
         _customerQueryRepository = customerQueryRespository;
         _customerCommandRepository = customerCommandRepository;
         _walletCommandRepository = walletCommandRepository;
+        _tokenCommandRepository = tokenCommandRepository;
+        _tokenQueryRepository = tokenQueryRepository;
 
         _authenticationHelper = authenticationHelper;
         _tokenService = tokenService;
@@ -125,7 +132,7 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
         }
     }
 
-    public async Task<ApiResponse> CustomerRegistrationEmailVerification (EmailVerificationRequestDTO request)
+    public async Task<ApiResponse> CustomerEmailVerification (EmailVerificationRequestDTO request)
     {
         try
         {
@@ -217,17 +224,64 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
         }
     }
 
+    //Logout
+    public async Task<ApiResponse> CustomerLogOut (CustomerLogOutRequestDTO request)
+    {
+        try
+        {
+            var verifyToken = await _tokenService.VerifyToken(request.Token);
+            if (!verifyToken.Status)
+                return ApiResponse.Failure(verifyToken.Message);
+            int customerId = verifyToken.Data.CustomerId;
+
+            //revoke token
+            var searchParams = new Dictionary<string, object>
+            {
+                { nameof(Token.CustomerId), customerId },
+                { nameof(Token.Revoked), false }
+            };
+            var tokensToRevoke = await _tokenQueryRepository.FindByMultipleFieldsAsync(searchParams, null);
+            if (!tokensToRevoke.Any())
+                return ApiResponse.Failure("Error logging Out");
+
+            using var transation = _tokenCommandRepository.BeginTransaction();
+            bool isCommitted = false;
+            try
+            {
+                foreach (var token in tokensToRevoke)
+                {
+                    token.Revoked = true;
+                    token.ExpiresAt = DateTime.UtcNow;
+
+                    await _tokenCommandRepository.UpdateWithOpenDbTransactionAsync(token, transation);
+                }
+
+                _tokenCommandRepository.CommitTransaction(transation);
+                isCommitted = true;
+
+                return ApiResponse.Success("Logout Successfull");
+            }
+            catch (Exception)
+            {
+                if(!isCommitted)
+                    _tokenCommandRepository.RollbackTransaction(transation);
+                throw;
+            }
+        }
+        catch (Exception e)
+        {
+            return ApiResponse.Failure(e.Message);
+        }
+    }
     //edit customer information
     public async Task<ApiResponse<EditCustomerDetailsResponseDTO>> EditCustomerInformation (EditCustomerDetailsRequestDTO request)
     {
         try
         {
-            var requestDto = new VerifyAccessTokenRequestDTO { Token = request.Token };
-            var verify = await _tokenService.VerifyAccessToken(requestDto);
-            if (!verify.Status)
-                return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
-                    StatusCodes.BadRequest);
-            int customerId = verify.Data.CustomerId;
+            var verifyToken = await _tokenService.VerifyToken(request.Token);
+            if (!verifyToken.Status)
+                return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(verifyToken.Message, StatusCodes.BadRequest);
+            int customerId = verifyToken.Data.CustomerId;
             
             //Inspect which values are actually passed in
             string? firstName = request.FirstName?.Trim();

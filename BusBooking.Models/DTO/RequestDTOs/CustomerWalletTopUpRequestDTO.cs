@@ -4,5 +4,4 @@ public class CustomerWalletTopUpRequestDTO
 {
     public required string Token { get; set; }
     public decimal Amount { get; set; }
-    public string Password { get; set; }
 }

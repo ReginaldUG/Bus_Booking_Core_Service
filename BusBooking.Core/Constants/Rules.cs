@@ -8,6 +8,7 @@ public class Rules
     public const int MAX_DRIVER_AGE = 70;
 
     public const decimal MIN_ROUTE_PRICE = 2000;
+    public const decimal REFUND_PERCENT = 0.9m;
 
     //TRIP TIME DURATION RULES
     public static readonly TimeOnly START_TIME = new TimeOnly(7, 0);

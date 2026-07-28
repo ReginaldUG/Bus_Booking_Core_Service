@@ -33,6 +33,13 @@ public class CustomerController : Controller
         return HttpResponseHelper.GetHttpResponse(response);
     }
     
+    [HttpPost("logout_customer")]
+    public async Task<IActionResult> CustomerLogOut([FromBody] CustomerLogOutRequestDTO request)
+    {
+        var response = await _customerAuthenticationService.CustomerLogOut(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
+
     [HttpPost("edit_customer")]
     public async Task<IActionResult> EditCustomer([FromBody] EditCustomerDetailsRequestDTO request)
     {

@@ -11,6 +11,10 @@ namespace BusBooking.Models.Entities
         public int Id { get; set; }
         public int CustomerId {get; set; }
         public int ScheduleId { get; set; }
+        public int PickUpStopId {get; set; }    
+        //foreign key for BusStops ID for customer pickup
+        public int DropOffStopId { get; set; }  
+        //foreign key for BusStops ID for customer dropoff
         public decimal Price {get; set; }
         public bool Completed { get; set; } = false;
         public bool IsCancelled { get; set; } = false;
@@ -20,5 +24,7 @@ namespace BusBooking.Models.Entities
 
         public virtual Customer Customer { get; set; } = null!;
         public virtual Schedule Schedule { get; set; } = null!;
+        public virtual BusStops PickUpStop { get; set; } = null!;
+        public virtual BusStops DropOffStop { get; set; } = null!;
     }
 }

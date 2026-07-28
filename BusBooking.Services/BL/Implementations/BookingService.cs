@@ -19,6 +19,8 @@ public class BookingService : IBookingService
     private readonly IQueryRepository<Booking> _bookingQueryRepository;
     private readonly IQueryRepository<Schedule> _scheduleQueryRepository;
     private readonly IQueryRepository<Bus> _busQueryRepository;
+    private readonly IQueryRepository<BusStops> _busStopQueryRepository;
+    private readonly IQueryRepository<RouteStops> _routeStopQueryRepository;
     private readonly IQueryRepository<Customer> _customerQueryRepository;
     private readonly IQueryRepository<CustomerWallet> _walletQueryRepository;
     private readonly ITokenService _tokenService;
@@ -31,6 +33,8 @@ public class BookingService : IBookingService
         IQueryRepository<Customer> customerQueryRepository, 
         IQueryRepository<CustomerWallet> walletQueryRepository,
         IQueryRepository<Bus> busQueryRepository, 
+        IQueryRepository<BusStops> busStopQueryRepository,
+        IQueryRepository<RouteStops> routeStopQueryRepository,
         ICommandRepository<CustomerWallet> walletCommandRepository, 
         ICommandRepository<CustomerWalletTransactions> txCommandRepository, ITokenService tokenService)
     {
@@ -43,71 +47,33 @@ public class BookingService : IBookingService
         _customerQueryRepository = customerQueryRepository;
         _walletQueryRepository = walletQueryRepository;
         _busQueryRepository = busQueryRepository;
+        _routeStopQueryRepository = routeStopQueryRepository;
+        _busStopQueryRepository = busStopQueryRepository;
+
         _tokenService = tokenService;
     }
 
-    //check current active schedules that are scheduled and on route
-    /*public async Task<ApiResponse<List<GetAllActiveScheduleForTodayResponseDTO>>> GetAllActiveScheduleForToday()
-    {
-        try
-        {
-            DateTime today = DateTime.UtcNow.Date;
-            var schedules = await _scheduleQueryRepository.GetAllByCriteriaAsync(nameof(Schedule.DateOfDeparture), today.ToString("yyyy-MM-dd"));
-            if (!schedules.Any())
-            {
-                return ApiResponse<List<GetAllActiveScheduleForTodayResponseDTO>>.Failure(
-                    $"No schedules found for this day: {today}", 
-                    StatusCodes.BadRequest);
-            }
-
-            var activeSchedulesList = schedules.Where(s=> s.Status == ScheduleStatus.Scheduled && s.BusId != null).ToList();
-
-            var returnDataList = activeSchedulesList.Select(s => new GetAllActiveScheduleForTodayResponseDTO
-            {
-                ArrivalTime = s.ArrivalTime,
-                DepartureTime = s.DepartureTime,
-                RemainingSeats = s.AvailableSeats,
-                Price = s.Price,
-                Status = s.Status,
-                RouteId = s.RouteId
-            }).ToList();
-
-            return ApiResponse<List<GetAllActiveScheduleForTodayResponseDTO>>.Success(
-                "Schedules Retrieved", returnDataList);
-
-        }
-        catch (Exception e)
-        {
-            return ApiResponse<List<GetAllActiveScheduleForTodayResponseDTO>>.Failure(e.Message,
-                StatusCodes.ServerError);
-        }
-    }*/
-    
     //book a bus
     public async Task<ApiResponse<BookScheduleResponseDTO>> BookSchedule(BookScheduleRequestDTO request)
     {
         try
         {
-            var requestDto = new VerifyAccessTokenRequestDTO { Token = request.Token };
-            var verify = await _tokenService.VerifyAccessToken(requestDto);
+            var verify = await _tokenService.VerifyToken(request.Token);
             if (!verify.Status)
                 return ApiResponse<BookScheduleResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
                     StatusCodes.BadRequest);
             int customerId = verify.Data.CustomerId;
 
             //Validation 1: Ensure customer and Schedule records exists
+            //Validation 2: Ensure customer account is active
             var customer = await _customerQueryRepository.FindByIdAsync(customerId);
             var schedule = await _scheduleQueryRepository.FindByIdAsync(request.ScheduleId);
-            if (customer == null || schedule == null)
-            {
-                string message = schedule == null ? ErrorMessages.SCHEDULE_NOT_FOUND : "Customer not found";
-                return ApiResponse<BookScheduleResponseDTO>.Failure(message, StatusCodes.BadRequest);
-            }
-                
-            //Validation 2: Ensure customer account is active
-            if (customer.Status != CustomerAccountStatus.Active)
-                return ApiResponse<BookScheduleResponseDTO>.Failure("Customer Account is not Active",
-                    StatusCodes.BadRequest);
+
+            string v1 = customer == null ? "Customer not found" :
+                schedule == null ? ErrorMessages.SCHEDULE_NOT_FOUND :
+                customer.Status != CustomerAccountStatus.Active ? "Customer Account is not Active" : "pass";
+            if (v1 != "pass")
+                return ApiResponse<BookScheduleResponseDTO>.Failure(v1, StatusCodes.BadRequest);
             
             //Validation 3: Ensure booking time is least 5 mins away from departure time
             DateTime scheduledDateTimeLocal = schedule.DateOfDeparture.Date.Add(schedule.DepartureTime.ToTimeSpan());
@@ -118,12 +84,11 @@ public class BookingService : IBookingService
             }
 
             //Validation 4: Ensure that schedule status is valid
-            if(schedule.Status != ScheduleStatus.Scheduled)
-                return ApiResponse<BookScheduleResponseDTO>.Failure("Schedule is not available for booking", StatusCodes.BadRequest);
-            
-            //Validation 5: Ensure seating space is available
-            if (schedule.AvailableSeats < 1)
-                return ApiResponse<BookScheduleResponseDTO>.Failure("All seats are booked", StatusCodes.BadRequest);
+            //Validation 5: Ensure seating Space is Available
+            string v4 = schedule.Status != ScheduleStatus.Scheduled ? "Schedule is not available for booking" :
+                schedule.AvailableSeats < request.NumberOfSeats ? "All seats are booked" : "pass";
+            if (v4 != "pass")
+                return ApiResponse<BookScheduleResponseDTO>.Failure(v4, StatusCodes.BadRequest);
             
             //Validation 6: Prevent booking duplicate slots for this customer on the same schedule ride
             var searchParam = new Dictionary<string, object>
@@ -137,12 +102,40 @@ public class BookingService : IBookingService
             
             //Validation 7: Ensure customer wallet has enough to pay for schedule
             var cWallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId), customerId.ToString());
-            //check that customer has wallet record
-            if (cWallet == null)
-                return ApiResponse<BookScheduleResponseDTO>.Failure("Customer Wallet not found", StatusCodes.BadRequest);
-            //ensure balance is enough for booking
-            if(cWallet.Balance < schedule.Price)
-                return ApiResponse<BookScheduleResponseDTO>.Failure("Insufficient Wallet Balance", StatusCodes.BadRequest);
+            string cm = cWallet == null ? "Customer Wallet not found" :
+                cWallet.Balance < schedule.Price ? "Insufficient Wallet Balance" : "good";
+            if (cm != "good")
+                return ApiResponse<BookScheduleResponseDTO>.Failure(cm, StatusCodes.BadRequest);
+                
+            //Validation 8: Ensure Pick up and drop off are not the same values
+            if(request.PickUpStopId == request.DropOffStopId)
+                return ApiResponse<BookScheduleResponseDTO>.Failure("Pick Up and Drop Off cannot be the same location", StatusCodes.BadRequest);
+            
+            //Validation 9: Ensure Pick Up and Drop off exist
+            var pickUp = await _busStopQueryRepository.FindByIdAsync(request.PickUpStopId);
+            var dropOff = await _busStopQueryRepository.FindByIdAsync(request.DropOffStopId);
+            string m = pickUp == null ? "Invalid PickUp location" : dropOff == null ? "Invalid DropOff location" : "good";
+            if (m != "good")
+                return ApiResponse<BookScheduleResponseDTO>.Failure(m, StatusCodes.BadRequest);
+            
+            //Validation 10 : Ensure Pick up and Drop off belong to selected schedule RouteID
+            var sp1 = new Dictionary<string, object>
+            {
+                { nameof(RouteStops.RouteId), schedule.RouteId },
+                { nameof(RouteStops.BusStopId), request.PickUpStopId }
+            };
+            var sp2 = new Dictionary<string, object>
+            {
+                { nameof(RouteStops.RouteId), schedule.RouteId },
+                { nameof(RouteStops.BusStopId), request.DropOffStopId }
+            };
+            var pickupRouteCheck = (await _routeStopQueryRepository.FindByMultipleFieldsAsync(sp1, null)).FirstOrDefault();
+            if (pickupRouteCheck == null)
+                return ApiResponse<BookScheduleResponseDTO>.Failure("PickUp not set for Route", StatusCodes.BadRequest);
+            
+            var dropoffRouteCheck = (await _routeStopQueryRepository.FindByMultipleFieldsAsync(sp2, null)).FirstOrDefault();
+            if (dropoffRouteCheck == null)
+                return ApiResponse<BookScheduleResponseDTO>.Failure("DropOff not set for Route", StatusCodes.BadRequest);
 
             //Getting bus oject for response data
             if (schedule.BusId == null)
@@ -150,7 +143,7 @@ public class BookingService : IBookingService
                 return ApiResponse<BookScheduleResponseDTO>.Failure(
                     "A physical bus must be assigne first to the schedule", StatusCodes.BadRequest);
             }
-            var bus = await _busQueryRepository.FindByCriteriaAsync(nameof(Bus.Id),schedule.BusId.ToString());
+            var bus = await _busQueryRepository.FindByCriteriaAsync(nameof(Bus.Id), schedule.BusId.ToString());
             
             if (bus == null)    
                 return ApiResponse<BookScheduleResponseDTO>.Failure("Bus not found for schedule", StatusCodes.BadRequest);
@@ -175,6 +168,8 @@ public class BookingService : IBookingService
                     CustomerId = customerId,
                     ScheduleId = request.ScheduleId,
                     Price = schedule.Price,
+                    PickUpStopId = request.PickUpStopId,
+                    DropOffStopId = request.DropOffStopId,
                     IsPaid = true
                 };
                 var newBooking = await _bookingCommandRepository.AddWithOpenDBTransaction(booking, transaction);
@@ -200,7 +195,7 @@ public class BookingService : IBookingService
                         ScheduleID = schedule.Id,
                         DepartureTime = schedule.DepartureTime,
                         ArrivaleTime = schedule.ArrivalTime,
-                        BusPlateNumeber = bus.PlateNumber,
+                        BusPlateNumber = bus.PlateNumber,
                         CustomerName = $"{customer.FirstName} {customer.LastName}"
                     });
             }
@@ -218,18 +213,14 @@ public class BookingService : IBookingService
     }
 
     //cancel customer booking
-    //if customer wants to cancel their booking
     public async Task<ApiResponse> CancelCustomerBooking (CancelCustomerBookingRequestDTO request)
     {
         try
         {
             //check customer token and get customer ID
-            var requestDto = new VerifyAccessTokenRequestDTO { Token = request.Token };
-            var verify = await _tokenService.VerifyAccessToken(requestDto);
-            
+            var verify = await _tokenService.VerifyToken(request.Token);            
             if (!verify.Status)
-                return ApiResponse<BookScheduleResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
-                    StatusCodes.BadRequest);
+                return ApiResponse.Failure(ErrorMessages.INVALID_TOKEN);
             int customerId = verify.Data.CustomerId;
 
             //verify booking exists, is assigned to customer, has not yet departed
@@ -261,7 +252,7 @@ public class BookingService : IBookingService
             {
                 //Cancel booking
                 booking.IsCancelled = true;
-                booking.CancelledBy = "customer";
+                booking.CancelledBy = Rules.CANCELLED_BY_CUSTOMER;
                 await _bookingCommandRepository.UpdateWithOpenDbTransactionAsync(booking, transaction);
 
                 //Update schedule seats
@@ -271,7 +262,7 @@ public class BookingService : IBookingService
                 //Update Customer Wallet if paid
                 if (booking.IsPaid)
                 {
-                    decimal refund = 0.9m * booking.Price;      //they get 90percent of the price refunded
+                    decimal refund = Rules.REFUND_PERCENT * booking.Price;      //they get 90percent of the price refunded
 
                     wallet.Balance += refund;
                     wallet.UpdatedAt = DateTime.UtcNow;
@@ -295,7 +286,7 @@ public class BookingService : IBookingService
 
                 return ApiResponse.Success(response);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 if(!isCommitted)
                     _bookingCommandRepository.RollbackTransaction(transaction);
@@ -373,7 +364,7 @@ public class BookingService : IBookingService
                 { nameof(Schedule.BusId), request.BusId },
                 { nameof(Schedule.DateOfDeparture), request.Day },
                 { nameof(Schedule.DepartureTime), request.DepartureTime },
-                {nameof(Schedule.Status), ScheduleStatus.Completed}
+                {nameof(Schedule.Status), ScheduleStatus.Scheduled}
             };
             var schedule = (await _scheduleQueryRepository.FindByMultipleFieldsAsync(searchParams, null)).FirstOrDefault();
             if (schedule == null)
@@ -398,13 +389,25 @@ public class BookingService : IBookingService
                 if(customer==null)
                     return ApiResponse<List<CustomerBookingBusManifestResponseDTO>>.Failure("Customer not found", StatusCodes.BadRequest);
                 
+                //retrieve the bus stops for that customer
+                var pickup = await _busStopQueryRepository.FindByIdAsync(booking.PickUpStopId);
+                var dropoff = await _busStopQueryRepository.FindByIdAsync(booking.DropOffStopId);
+                
+                string m = pickup == null ? "Pick Up Stop not found" :
+                    dropoff == null ? "Drop Off Stop not found" : "pass";
+                if (m != "pass")
+                    return ApiResponse<List<CustomerBookingBusManifestResponseDTO>>.Failure(m, StatusCodes.BadRequest);
+
                 //fill return list
                 var c = new CustomerBookingBusManifestResponseDTO
                 {
                     FirstName = customer.FirstName,
                     LastName = customer.LastName,
                     AccountStatus = customer.Status,
-                    Age = customer.Age
+                    Age = customer.Age,
+                    PickUp = pickup.Name,
+                    DropOff = dropoff.Name,
+                    Paid = booking.IsPaid
                 };
                 customers.Add(c);
             }

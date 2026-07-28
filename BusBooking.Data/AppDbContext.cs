@@ -9,7 +9,9 @@ namespace BusBooking.Data
         public DbSet<Customer> Customers { get; set; } = null!;
         public DbSet<Driver> Drivers { get; set; } = null!;
         public DbSet<Bus> Buses { get; set; } = null!;
+        public DbSet<BusStops> BusStops { get; set; } = null!;
         public DbSet<Route> Routes { get; set; } = null!;
+        public DbSet<RouteStops> RouteStops { get; set; } = null!;
         public DbSet<CustomerWallet> CustomerWallets { get; set; } = null!;
         public DbSet<CustomerWalletTransactions> CustomerWalletTransactions { get; set; } = null!;
         public DbSet<Schedule> Schedules { get; set; } = null!;

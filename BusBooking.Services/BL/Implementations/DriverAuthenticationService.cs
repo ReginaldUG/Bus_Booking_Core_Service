@@ -13,21 +13,16 @@ namespace BusBooking.Services.BL.Implementations;
 public class DriverAuthenticationService : IDriverAuthenticationService
 {
     private readonly IQueryRepository<Driver> _driverQueryRepository;
-    private readonly IQueryRepository<Bus> _busQueryRepository;
     private readonly ICommandRepository<Driver> _driverCommandRepository;
-    private readonly ICommandRepository<Bus> _busCommandRepository;
     private readonly AuthenticationHelper _authenticationHelper;
 
     public DriverAuthenticationService(
-        IQueryRepository<Driver> driverQueryRepository, IQueryRepository<Bus> busQueryRepository, 
-        ICommandRepository<Driver> driverCommandRepository, 
-        ICommandRepository<Bus> busCommandRepository, 
+        IQueryRepository<Driver> driverQueryRepository,
+        ICommandRepository<Driver> driverCommandRepository,
         AuthenticationHelper authenticationHelper)
     {
         _driverQueryRepository = driverQueryRepository;
-        _busQueryRepository = busQueryRepository;
         _driverCommandRepository = driverCommandRepository;
-        _busCommandRepository = busCommandRepository;
 
         _authenticationHelper = authenticationHelper;
     }
@@ -109,10 +104,6 @@ public class DriverAuthenticationService : IDriverAuthenticationService
             bool isCommitted = false;
             try
             {
-                //Check and Get if there is an available bus
-                var availableBus = await _busQueryRepository.FindByCriteriaAsync("DriverAssigned", "false");
-                bool hasValidBus = availableBus != null && availableBus.Id > 0;
-
                 //create driver
                 var driver = new Driver
                 {
@@ -121,21 +112,10 @@ public class DriverAuthenticationService : IDriverAuthenticationService
                     Age = registerRequest.Age,
                     Email = registerRequest.Email,
                     PhoneNumber = registerRequest.PhoneNumber,
-                    BusId = hasValidBus ? availableBus.Id : null,
                     HashedPassword = hashedPassword,
-                    Status = hasValidBus 
-                        ? DriverAccountStatus.Active
-                        : DriverAccountStatus.PendingBus
+                    Status = DriverAccountStatus.PendingBus
                 };
                 await _driverCommandRepository.AddWithOpenDBTransaction(driver, transaction);
-
-                //update Bus if available bus assigned
-                if (hasValidBus)
-                {
-                    availableBus.DriverAssigned = true;
-                    availableBus.Status = BusStatus.Active;
-                    await _busCommandRepository.UpdateWithOpenDbTransactionAsync(availableBus, transaction);
-                }
 
                 _driverCommandRepository.CommitTransaction(transaction);
                 isCommitted = true;
@@ -147,8 +127,7 @@ public class DriverAuthenticationService : IDriverAuthenticationService
                         FirstName = driver.FirstName,
                         LastName = driver.LastName,
                         PhoneNumber = driver.PhoneNumber,
-                        Status = driver.Status,
-                        AssignedBus = hasValidBus ? availableBus.PlateNumber : null
+                        Status = driver.Status
                     }
                 );
 
@@ -211,17 +190,14 @@ public class DriverAuthenticationService : IDriverAuthenticationService
         {
             //ensure password meets criteria
             var passwordCheck = _authenticationHelper.ValidatePasswordRules(request.Password);
-            if (!passwordCheck.Status)
-            {
-                return ApiResponse<string>.Failure(passwordCheck.Message, StatusCodes.BadRequest);
-            }
 
-            //check age
-            if(request.Age < Rules.MIN_DRIVER_AGE)
-            {
-                return ApiResponse<string>.Failure($"Must be {Rules.MIN_DRIVER_AGE} and above", StatusCodes.BadRequest);
-            }
+            string message = !passwordCheck.Status ? passwordCheck.Message :
+                request.Age < Rules.MIN_DRIVER_AGE ? $"Must be {Rules.MIN_DRIVER_AGE} and above" :
+                request.Age > Rules.MAX_DRIVER_AGE ? $"Cannot be above {Rules.MAX_DRIVER_AGE} yrs" : "good";
 
+            if (message != "good")
+                return ApiResponse<string>.Failure(message, StatusCodes.BadRequest);
+            
             //hash password
             string hashedPassword = _authenticationHelper.HashPassword(request.Password).Data;
 

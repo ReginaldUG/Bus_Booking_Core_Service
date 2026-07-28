@@ -107,16 +107,32 @@ public class TokenService : ITokenService
         }
     }
 
-    //Verify Token
-    public async Task<ApiResponse<VerifyAccessTokenResponseDTO>> VerifyAccessToken (VerifyAccessTokenRequestDTO request)
+    //verify token public
+    public async Task<ApiResponse<VerifyAccessTokenResponseDTO>> VerifyToken(string token)
+    {
+        var verify = await VerifyAccessToken(token);
+        
+        if (!verify.Status)
+            return ApiResponse<VerifyAccessTokenResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
+                StatusCodes.BadRequest);
+        
+        int customerId = verify.Data;
+        return ApiResponse<VerifyAccessTokenResponseDTO>.Success("Token verified", new VerifyAccessTokenResponseDTO
+        {
+            CustomerId = customerId
+        });
+    }
+    
+    //verify token logic
+    private async Task<ApiResponse<int>> VerifyAccessToken (string requestToken)
     {
         try
         {
             //split token in salt and main token
-            string[] parts = request.Token.Split('.');
+            string[] parts = requestToken.Split('.');
             if (parts.Length != 2)
             {
-                return ApiResponse<VerifyAccessTokenResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN, StatusCodes.BadRequest);
+                return ApiResponse<int>.Failure(ErrorMessages.INVALID_TOKEN, StatusCodes.BadRequest);
             }
 
             string token = parts[0];
@@ -125,26 +141,31 @@ public class TokenService : ITokenService
             //verify salt exist with record
             var checkMatch = await _tokenQueryRepository.FindByCriteriaAsync(nameof(Token.Salt), salt);
             if (checkMatch == null)
-                return ApiResponse<VerifyAccessTokenResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN, StatusCodes.BadRequest);
+                return ApiResponse<int>.Failure(ErrorMessages.INVALID_TOKEN, StatusCodes.BadRequest);
 
             //verify token matches salt entry
             var verify = _authHelper.VerifyPassword(token, checkMatch.TokenHash);
             if(!verify.Status)
-                return ApiResponse<VerifyAccessTokenResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN, StatusCodes.BadRequest);
+                return ApiResponse<int>.Failure(ErrorMessages.INVALID_TOKEN, StatusCodes.BadRequest);
             
             //verify it satisfies other conditions
             bool failed = checkMatch.ExpiresAt < DateTime.UtcNow.AddMinutes(1) || checkMatch.Revoked;
             if (failed)
-                return ApiResponse<VerifyAccessTokenResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN, StatusCodes.BadRequest);
+                return ApiResponse<int>.Failure(ErrorMessages.INVALID_TOKEN, StatusCodes.BadRequest);
+            
+            //check that customer account is valid
+            var customerCheck = await _customerQueryRepository.FindByIdAsync(checkMatch.CustomerId);
+            if (customerCheck == null)
+                return ApiResponse<int>.Failure(ErrorMessages.INVALID_TOKEN, StatusCodes.BadRequest);
+            if (customerCheck.Status != CustomerAccountStatus.Active)
+                return ApiResponse<int>.Failure("Customer Account is not Active", StatusCodes.BadRequest);
 
-            return ApiResponse<VerifyAccessTokenResponseDTO>.Success("Token Verified", new VerifyAccessTokenResponseDTO
-            {
-                CustomerId = checkMatch.CustomerId
-            });
+
+            return ApiResponse<int>.Success("Token Verified", checkMatch.CustomerId);
         }
         catch (Exception e)
         {
-            return ApiResponse<VerifyAccessTokenResponseDTO>.Failure(e.Message, StatusCodes.ServerError);
+            return ApiResponse<int>.Failure(e.Message, StatusCodes.ServerError);
         }
     }
 }

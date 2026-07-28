@@ -17,12 +17,10 @@ public class TransferService : ITransferService
     private readonly IQueryRepository<CustomerWallet> _walletQueryRepository;
     private readonly ICommandRepository<CustomerWallet> _walletCommandRepository;
     private readonly ICommandRepository<CustomerWalletTransactions> _txWalletCommandRepository;
-    private readonly AuthenticationHelper _authHelper;
     private readonly ITokenService _tokenService;
 
     public TransferService (
         IQueryRepository<Customer> customerQueryRepository,  ITokenService tokenService,
-        AuthenticationHelper authHelper,
         IQueryRepository<CustomerWallet> walletQueryRepository, 
         ICommandRepository<CustomerWallet> waleltCommandRepository, 
         ICommandRepository<CustomerWalletTransactions> txWalletCommandRepository)
@@ -31,7 +29,6 @@ public class TransferService : ITransferService
         _walletQueryRepository = walletQueryRepository;
         _walletCommandRepository = waleltCommandRepository;
         _txWalletCommandRepository = txWalletCommandRepository;
-        _authHelper = authHelper;
         _tokenService = tokenService;
     }
 
@@ -39,8 +36,7 @@ public class TransferService : ITransferService
     {
         try
         {
-            var requestDto = new VerifyAccessTokenRequestDTO { Token = request.Token };
-            var verify = await _tokenService.VerifyAccessToken(requestDto);
+            var verify = await _tokenService.VerifyToken(request.Token);
             if (!verify.Status)
                 return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
                     StatusCodes.BadRequest);
@@ -51,10 +47,9 @@ public class TransferService : ITransferService
             if (customer == null)
                 return ApiResponse.Failure(ErrorMessages.INVALID_CREDENTIALS);
             
-            //validate password entered is correct
-            var validate = _authHelper.VerifyPassword(request.Password, customer.HashedPassword);
-            if (!validate.Status)
-                return ApiResponse.Failure(ErrorMessages.INVALID_CREDENTIALS);
+            //validate customer account is active
+            if (customer.Status != CustomerAccountStatus.Active)
+                return ApiResponse.Failure("Customer Account is not active");
             
             //validate the amount to be topped up
             if (request.Amount < 1000)
@@ -107,8 +102,7 @@ public class TransferService : ITransferService
     {
         try
         {
-            var requestDto = new VerifyAccessTokenRequestDTO { Token = request.Token };
-            var verify = await _tokenService.VerifyAccessToken(requestDto);
+            var verify = await _tokenService.VerifyToken(request.Token);
             if (!verify.Status)
                 return ApiResponse<CheckWalletBalanceResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
                     StatusCodes.BadRequest);

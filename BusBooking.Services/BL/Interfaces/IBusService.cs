@@ -7,6 +7,7 @@ namespace BusBooking.Services.BL.Interfaces;
 public interface IBusService
 {
     Task<ApiResponse<CreateBusResponseDTO>> CreateBusTask(CreateBusRequestDTO request);
+    Task<ApiResponse> AddBusStop(AddBusStopRequestDTO request);
     Task<ApiResponse<List<GetBusListResponseDTO>>> GetBusList();
 
 }

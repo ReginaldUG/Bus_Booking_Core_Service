@@ -2,6 +2,7 @@ using BusBooking.Core.Constants;
 using BusBooking.Data.Commands.Interfaces;
 using BusBooking.Data.Queries.Interfaces;
 using BusBooking.Models.DTO;
+using BusBooking.Models.DTO.RequestDTOs;
 using BusBooking.Models.DTO.ResponseDTOs;
 using BusBooking.Models.Entities;
 using BusBooking.Services.BL.Interfaces;
@@ -9,31 +10,25 @@ using BusBooking.Services.Helpers;
 
 namespace BusBooking.Services.BL.Implementations;
 
-/*BUS CREATION LOGIC
- When the create bus endpoint is triggered, the system checks if there is a RouteName passed in the body
- This RouteName would indicate that the call wants that new Bus assigned to the route
- IF NO RoutName is passed, it is assumed the Bus will stay unassigned to a Route for now
-
- Next step is to check if there is any driver pending a bus assignment- if so, this bus is assigned to them
- and update necessary column fields in route, bus and driver table respectively
-
- */
-
 public class BusService : IBusService
 {
     private readonly IQueryRepository<Bus> _busQueryRepository;
+    private readonly IQueryRepository<BusStops> _busStopQueryRepository;
     private readonly IQueryRepository<Driver> _driverQueryRepository;
     private readonly ICommandRepository<Bus> _busCommandRepository;
+    private readonly ICommandRepository<BusStops> _busStopCommandRepository;
     private readonly GeneralHelpers _generalHelpers;
 
-    public BusService(IQueryRepository<Bus> busQueryRepository,
-        IQueryRepository<Driver> driverQueryRepository,
+    public BusService(IQueryRepository<Bus> busQueryRepository, IQueryRepository<BusStops> busStopQueryRepository,
+        ICommandRepository<BusStops> busStopCommandRepository, IQueryRepository<Driver> driverQueryRepository,
         ICommandRepository<Bus> busCommandRepository,
         GeneralHelpers generalHelpers)
     {
         _busQueryRepository = busQueryRepository;
+        _busStopQueryRepository = busStopQueryRepository;
         _driverQueryRepository = driverQueryRepository;
         _busCommandRepository = busCommandRepository;
+        _busStopCommandRepository = busStopCommandRepository;
 
         _generalHelpers = generalHelpers;
     }
@@ -77,6 +72,32 @@ public class BusService : IBusService
         }
     }
 
+    //add bus Stop
+    public async Task<ApiResponse> AddBusStop (AddBusStopRequestDTO request)
+    {
+        try
+        {
+            //check that entry name does not exist
+            var exist = await _busStopQueryRepository.FindByCriteriaAsync(nameof(BusStops.Name), request.Name);
+            if (exist != null)
+                return ApiResponse.Failure(ErrorMessages.DUPLICATE_ENTRY);
+            
+            //STORE
+            var busStop = new BusStops
+            {
+                Name = request.Name
+            };
+            await _busStopCommandRepository.AddAsync(busStop);
+
+            return ApiResponse.Success($"New Bus Stop Added : {request.Name}");
+        }
+        catch (Exception e)
+        {
+            return ApiResponse.Failure(e.Message);
+        }
+        
+
+    }
     public async Task<ApiResponse<List<GetBusListResponseDTO>>> GetBusList()
     {
         try

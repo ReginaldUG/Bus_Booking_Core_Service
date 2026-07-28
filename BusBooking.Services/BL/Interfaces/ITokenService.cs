@@ -7,5 +7,5 @@ namespace BusBooking.Services.BL.Interfaces;
 public interface ITokenService
 {
     Task<ApiResponse<CreateAccessTokenResponseDTO>> CreateAssignAccessToken(int customerId);
-    Task<ApiResponse<VerifyAccessTokenResponseDTO>> VerifyAccessToken(VerifyAccessTokenRequestDTO request);
+    Task<ApiResponse<VerifyAccessTokenResponseDTO>> VerifyToken(string token);
 }

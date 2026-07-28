@@ -1,6 +1,5 @@
-using System.Net;
+using BusBooking.Models.DTO.RequestDTOs;
 using BusBooking.Models.DTO.ResponseDTOs;
-using BusBooking.Services.BL.Implementations;
 using BusBooking.Services.BL.Interfaces;
 using BusBookingAPI.Helpers;
 using Microsoft.AspNetCore.Mvc;
@@ -24,5 +23,11 @@ public class BusController : Controller
         var response = await _busService.CreateBusTask(request);
         return HttpResponseHelper.GetHttpResponse(response);
     }
-    
+
+    [HttpPost("add_bus_stop")]
+    public async Task<IActionResult> AddBusStop([FromBody] AddBusStopRequestDTO request)
+    {
+        var response = await _busService.AddBusStop(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
 }
