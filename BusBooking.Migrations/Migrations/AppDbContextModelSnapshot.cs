@@ -30,6 +30,9 @@ namespace BusBooking.Migrations.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BusStopsId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("CancelledBy")
                         .HasColumnType("text");
 
@@ -42,11 +45,17 @@ namespace BusBooking.Migrations.Migrations
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("DropOffStopId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsCancelled")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsPaid")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("PickUpStopId")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
@@ -56,7 +65,13 @@ namespace BusBooking.Migrations.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BusStopsId");
+
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("DropOffStopId");
+
+                    b.HasIndex("PickUpStopId");
 
                     b.HasIndex("ScheduleId");
 
@@ -65,6 +80,8 @@ namespace BusBooking.Migrations.Migrations
                             t.HasCheckConstraint("chk_CancelledBy", "\"CancelledBy\" IN ('customer', 'driver')");
 
                             t.HasCheckConstraint("chk_CancelledBy_Condition", "(\"IsCancelled\" = true AND \"CancelledBy\" IN ('customer', 'driver')) OR (\"IsCancelled\" = false AND \"CancelledBy\" IS NULL)");
+
+                            t.HasCheckConstraint("chk_Different_Stops", "(\"PickUpStopId\" <> \"DropOffStopId\")");
                         });
                 });
 
@@ -99,6 +116,32 @@ namespace BusBooking.Migrations.Migrations
                         .IsUnique();
 
                     b.ToTable("Buses", (string)null);
+                });
+
+            modelBuilder.Entity("BusBooking.Models.Entities.BusStops", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("BusStops", (string)null);
                 });
 
             modelBuilder.Entity("BusBooking.Models.Entities.Customer", b =>
@@ -336,6 +379,36 @@ namespace BusBooking.Migrations.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BusBooking.Models.Entities.RouteStops", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BusStopId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RouteId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusStopId");
+
+                    b.HasIndex("RouteId", "BusStopId")
+                        .IsUnique();
+
+                    b.ToTable("RouteStops", (string)null);
+                });
+
             modelBuilder.Entity("BusBooking.Models.Entities.Schedule", b =>
                 {
                     b.Property<int>("Id")
@@ -470,9 +543,25 @@ namespace BusBooking.Migrations.Migrations
 
             modelBuilder.Entity("BusBooking.Models.Entities.Booking", b =>
                 {
+                    b.HasOne("BusBooking.Models.Entities.BusStops", null)
+                        .WithMany("Booking")
+                        .HasForeignKey("BusStopsId");
+
                     b.HasOne("BusBooking.Models.Entities.Customer", "Customer")
                         .WithMany("Bookings")
                         .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusBooking.Models.Entities.BusStops", "DropOffStop")
+                        .WithMany()
+                        .HasForeignKey("DropOffStopId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusBooking.Models.Entities.BusStops", "PickUpStop")
+                        .WithMany()
+                        .HasForeignKey("PickUpStopId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -483,6 +572,10 @@ namespace BusBooking.Migrations.Migrations
                         .IsRequired();
 
                     b.Navigation("Customer");
+
+                    b.Navigation("DropOffStop");
+
+                    b.Navigation("PickUpStop");
 
                     b.Navigation("Schedule");
                 });
@@ -517,6 +610,25 @@ namespace BusBooking.Migrations.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Bus");
+                });
+
+            modelBuilder.Entity("BusBooking.Models.Entities.RouteStops", b =>
+                {
+                    b.HasOne("BusBooking.Models.Entities.BusStops", "BusStops")
+                        .WithMany("RouteStops")
+                        .HasForeignKey("BusStopId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusBooking.Models.Entities.Route", "Route")
+                        .WithMany("RouteStops")
+                        .HasForeignKey("RouteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BusStops");
+
+                    b.Navigation("Route");
                 });
 
             modelBuilder.Entity("BusBooking.Models.Entities.Schedule", b =>
@@ -565,6 +677,13 @@ namespace BusBooking.Migrations.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("BusBooking.Models.Entities.BusStops", b =>
+                {
+                    b.Navigation("Booking");
+
+                    b.Navigation("RouteStops");
+                });
+
             modelBuilder.Entity("BusBooking.Models.Entities.Customer", b =>
                 {
                     b.Navigation("Bookings");
@@ -581,6 +700,8 @@ namespace BusBooking.Migrations.Migrations
 
             modelBuilder.Entity("BusBooking.Models.Entities.Route", b =>
                 {
+                    b.Navigation("RouteStops");
+
                     b.Navigation("ScheduleRules");
 
                     b.Navigation("Schedules");

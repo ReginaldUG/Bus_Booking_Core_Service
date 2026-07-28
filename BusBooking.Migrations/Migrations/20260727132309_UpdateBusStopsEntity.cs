@@ -5,7 +5,7 @@
 namespace BusBooking.Migrations.Migrations
 {
     /// <inheritdoc />
-    public partial class ChangeScheduleDateofDeparture : Migration
+    public partial class UpdateBusStopsEntity : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
