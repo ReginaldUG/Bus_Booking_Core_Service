@@ -53,7 +53,6 @@ public class CommandRepository<TEntity> : ICommandRepository<TEntity> where TEnt
         {
             idProperty.SetValue(entity, id);
         }
-
         return entity;
     }
 
@@ -61,7 +60,6 @@ public class CommandRepository<TEntity> : ICommandRepository<TEntity> where TEnt
     {
         var query = _utilities.GenerateUpdateQuery<TEntity>();
         await _executer.ExecuteCommandAsync(query, entity, sqltransaction);
-
     }
 
     public NpgsqlTransaction BeginTransaction()

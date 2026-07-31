@@ -236,7 +236,7 @@ public class BookingService : IBookingService
             scheduledDateTimeLocal = DateTime.SpecifyKind(scheduledDateTimeLocal, DateTimeKind.Local);
 
             string message = booking.Completed ? "Cannot cancel a completed booking" :
-                booking.CustomerId != customerId ? "Booking not tied to customer" :
+                booking.CustomerId != customerId ? "Booking is not tied to customer" :
                 bookingSchedule.Status != ScheduleStatus.Scheduled ? "Schedule not valid to cancel" :
                 DateTime.Now.AddMinutes(5) > scheduledDateTimeLocal ? "Cancellation period has elapsed" : "null";
             if (message != "null")
@@ -262,7 +262,7 @@ public class BookingService : IBookingService
                 //Update Customer Wallet if paid
                 if (booking.IsPaid)
                 {
-                    decimal refund = Rules.REFUND_PERCENT * booking.Price;      //they get 90percent of the price refunded
+                    decimal refund = Rules.REFUND_PERCENT * booking.Price;      //they get 90 percent of the price refunded
 
                     wallet.Balance += refund;
                     wallet.UpdatedAt = DateTime.UtcNow;
@@ -332,7 +332,6 @@ public class BookingService : IBookingService
                     IsPaid = customerBooking[i].IsPaid,
                     Price = customerBooking[i].Price
                 };
-
                 returnDataList.Add(response);
             }
 

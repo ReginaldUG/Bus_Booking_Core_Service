@@ -170,7 +170,7 @@ public class ScheduleService : IScheduleService
 
                 return ApiResponse.Success($"Successfully generated {rules.Count} schedules for {today:d}");
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 if (!isCommitted)
                 {
