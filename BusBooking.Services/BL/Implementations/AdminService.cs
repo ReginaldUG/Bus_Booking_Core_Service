@@ -15,6 +15,9 @@ public class AdminService : IAdminService
     private readonly IQueryRepository<Customer> _customerQueryRepository;
     private readonly IQueryRepository<CustomerWallet> _walletQueryRepository;
     private readonly IQueryRepository<Bus> _busQueryRepository;
+    private readonly IQueryRepository<BusStops> _busStopsQueryRepository;
+    private readonly IQueryRepository<Route> _routeQueryRepository;
+    private readonly IQueryRepository<RouteStops> _routeStopsQueryRepository;
     private readonly IQueryRepository<Driver> _driverQueryRepository;
     private readonly ICommandRepository<Bus> _busCommandRepository;
     private readonly ICommandRepository<Driver> _driverCommandRepository;
@@ -22,13 +25,17 @@ public class AdminService : IAdminService
     public readonly GeneralHelpers _generalHelpers;
 
     public AdminService(IQueryRepository<Customer> customerQueryRepository, IQueryRepository<CustomerWallet> walletQueryRepository,
-        IQueryRepository<Bus> busQueryRepository, IQueryRepository<Driver> driverQueryRepository, 
+        IQueryRepository<Bus> busQueryRepository, IQueryRepository<Route> routeQueryRepository, 
+        IQueryRepository<Driver> driverQueryRepository, IQueryRepository<RouteStops> routeStopsQueryRepository,
         ICommandRepository<Bus> busCommandRepository, ICommandRepository<Driver> driverCommandRepository,
-        GeneralHelpers generalHelpers)
+        IQueryRepository<BusStops> busStopsQueryRepository,GeneralHelpers generalHelpers)
     {
         _customerQueryRepository = customerQueryRepository;
         _walletQueryRepository = walletQueryRepository;
         _driverQueryRepository = driverQueryRepository;
+        _routeQueryRepository = routeQueryRepository;
+        _routeStopsQueryRepository = routeStopsQueryRepository;
+        _busStopsQueryRepository = busStopsQueryRepository;
         _busQueryRepository = busQueryRepository;
         _busCommandRepository = busCommandRepository;
         _driverCommandRepository = driverCommandRepository;
@@ -149,4 +156,43 @@ public class AdminService : IAdminService
             return ApiResponse<CustomerInfoResponseDTO>.Failure(e.Message, StatusCodes.ServerError);
         }
     }
+    
+    //get bus route and its bus stops
+    public async Task<ApiResponse<GetRouteBusStopsResponseDTO>> GetRouteBusStopsInfo (GetRouteBusStopsRequestDTO request)
+    {
+        try
+        {
+            //check that route id exists
+            var route = await _routeQueryRepository.FindByIdAsync(request.RouteId);
+            if (route == null)
+                return ApiResponse<GetRouteBusStopsResponseDTO>.Failure(ErrorMessages.ROUTE_NOT_FOUND,
+                    StatusCodes.BadRequest);
+
+            var busStops = (await _routeStopsQueryRepository.GetAllByCriteriaAsync(nameof(RouteStops.RouteId), request.RouteId.ToString())).ToList();
+            if(busStops.Count == 0)
+                return ApiResponse<GetRouteBusStopsResponseDTO>.Failure("Cannot find Route Bus Stops", StatusCodes.BadRequest);
+
+            List<string> BusStopsList = new List<string>();
+            foreach (var stops in busStops)
+            {
+                var s = await _busStopsQueryRepository.FindByIdAsync(stops.BusStopId);
+                if (s == null)
+                    return ApiResponse<GetRouteBusStopsResponseDTO>.Failure("Cannot find Bus Stop", StatusCodes.BadRequest);
+
+                BusStopsList.Add(s.Name);
+            }
+
+            return ApiResponse<GetRouteBusStopsResponseDTO>.Success($"{route.RouteName}: Bus Stops Retrieved",
+                new GetRouteBusStopsResponseDTO
+                {
+                    RouteName = route.RouteName,
+                    BusStops = BusStopsList
+                });
+        }
+        catch (Exception e)
+        {
+            return ApiResponse<GetRouteBusStopsResponseDTO>.Failure(e.Message, StatusCodes.ServerError);
+        }
+    }
+    
 }

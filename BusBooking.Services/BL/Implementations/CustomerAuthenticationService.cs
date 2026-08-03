@@ -1,5 +1,4 @@
 
-using System.Runtime.InteropServices.JavaScript;
 using BusBooking.Core.Constants;
 using BusBooking.Data.Commands.Interfaces;
 using BusBooking.Data.Queries.Interfaces;
@@ -14,31 +13,29 @@ namespace BusBooking.Services.BL.Implementations;
 
 public class CustomerAuthenticationService : ICustomerAuthenticationService
 {
+    private readonly IAuthenticatedUserService _currentUser;
     private readonly IQueryRepository<Customer> _customerQueryRepository;
     private readonly ICommandRepository<Customer> _customerCommandRepository;
-    private readonly IQueryRepository<Token> _tokenQueryRepository;
-    private readonly ICommandRepository<Token> _tokenCommandRepository;
     private readonly ICommandRepository<CustomerWallet> _walletCommandRepository;
     private readonly AuthenticationHelper _authenticationHelper;
-    private readonly ITokenService _tokenService;
+    private readonly IJwtService _jwtService;
     private readonly EmailHelper _emailHelper;
 
     public CustomerAuthenticationService(
+        IAuthenticatedUserService currentUser,
         IQueryRepository<Customer> customerQueryRespository,
         ICommandRepository<Customer> customerCommandRepository, 
         ICommandRepository<CustomerWallet> walletCommandRepository,
-        ICommandRepository<Token> tokenCommandRepository,
-        IQueryRepository<Token> tokenQueryRepository,
-        AuthenticationHelper authenticationHelper, ITokenService tokenService, EmailHelper emailHelper)
+        IJwtService jwtService,
+        AuthenticationHelper authenticationHelper, EmailHelper emailHelper)
     {
+        _currentUser = currentUser;
         _customerQueryRepository = customerQueryRespository;
         _customerCommandRepository = customerCommandRepository;
         _walletCommandRepository = walletCommandRepository;
-        _tokenCommandRepository = tokenCommandRepository;
-        _tokenQueryRepository = tokenQueryRepository;
 
         _authenticationHelper = authenticationHelper;
-        _tokenService = tokenService;
+        _jwtService = jwtService;
         _emailHelper = emailHelper;
     }
 
@@ -193,10 +190,14 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
                         StatusCodes.Unauthorized
                     );
             }
-
-            var token = await _tokenService.CreateAssignAccessToken(customer.Id);
-            if (!token.Status)
-                return ApiResponse<CustomerLoginResponseDTO>.Failure("Error generating Token", StatusCodes.BadRequest);
+            
+            //token generate
+            JwtUserTokenRequest tokenRequest = new JwtUserTokenRequest
+            {
+                UserEmail = customer.Email,
+                UserId = customer.Id
+            };
+            var generatedJwtToken = _jwtService.GenerateJwtToken(tokenRequest);            
 
             //Update Last_login field in Customer table
             customer.LastLogin = DateTime.UtcNow;
@@ -207,7 +208,7 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
                     "Login Successful",
                     new CustomerLoginResponseDTO
                     {
-                        Token = token.Data.Token,
+                        Token = generatedJwtToken,
                         Age = customer.Age,
                         FirstName = customer.FirstName,
                         LastName = customer.LastName,
@@ -224,8 +225,9 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
         }
     }
 
+
     //Logout
-    public async Task<ApiResponse> CustomerLogOut (CustomerLogOutRequestDTO request)
+/*    public async Task<ApiResponse> CustomerLogOut (CustomerLogOutRequestDTO request)
     {
         try
         {
@@ -273,15 +275,17 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
             return ApiResponse.Failure(e.Message);
         }
     }
+
+    */
+    
     //edit customer information
     public async Task<ApiResponse<EditCustomerDetailsResponseDTO>> EditCustomerInformation (EditCustomerDetailsRequestDTO request)
     {
         try
         {
-            var verifyToken = await _tokenService.VerifyToken(request.Token);
-            if (!verifyToken.Status)
-                return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(verifyToken.Message, StatusCodes.BadRequest);
-            int customerId = verifyToken.Data.CustomerId;
+            int? authenticatedCustomerId = _currentUser.UserId;
+            if (authenticatedCustomerId == null)
+                return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN, StatusCodes.Unauthorized);
             
             //Inspect which values are actually passed in
             string? firstName = request.FirstName?.Trim();
@@ -291,7 +295,7 @@ public class CustomerAuthenticationService : ICustomerAuthenticationService
             string? phoneNumber = request.PhoneNumber?.Trim();            
 
             //check id
-            var customer = await _customerQueryRepository.FindByIdAsync(customerId);
+            var customer = await _customerQueryRepository.FindByIdAsync((int)authenticatedCustomerId);
             if (customer == null)
                 return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(ErrorMessages.INVALID_CREDENTIALS, StatusCodes.Unauthorized);
 

@@ -77,5 +77,12 @@ public class AdminController : Controller
         return HttpResponseHelper.GetHttpResponse(response);
     }
 
+    [HttpGet("get_route_stops")]
+    public async Task<IActionResult> GetBusStopList (GetRouteBusStopsRequestDTO request)
+    {
+        var response = await _adminService.GetRouteBusStopsInfo(request);
+        return HttpResponseHelper.GetHttpResponse(response);
+    }
+
 
 }

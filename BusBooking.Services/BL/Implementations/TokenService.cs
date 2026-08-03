@@ -110,6 +110,7 @@ public class TokenService : ITokenService
     //verify token public
     public async Task<ApiResponse<VerifyAccessTokenResponseDTO>> VerifyToken(string token)
     {
+        
         var verify = await VerifyAccessToken(token);
         
         if (!verify.Status)

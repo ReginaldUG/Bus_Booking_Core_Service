@@ -16,6 +16,8 @@ public class ScheduleService : IScheduleService
     private readonly IQueryRepository<ScheduleRules> _rulesQueryRepository;
     private readonly IQueryRepository<Bus> _busQueryRepository;
     private readonly IQueryRepository<Route> _routQueryRepository;
+    private readonly IQueryRepository<RouteStops> _routeStopQueryRepository;
+    private readonly IQueryRepository<BusStops> _busStopsQueryRepository;
     private readonly ICommandRepository<Schedule> _scheduleCommandRepository;
     private readonly ICommandRepository<ScheduleRules> _rulesCommandRepository;
     private readonly GeneralHelpers _generalHelpers;
@@ -24,6 +26,8 @@ public class ScheduleService : IScheduleService
         IQueryRepository<ScheduleRules> rulesQueryRepository, 
         IQueryRepository<Bus> busQueryRepository, 
         IQueryRepository<Route> routQueryRepository,
+        IQueryRepository<RouteStops> routeStopQueryRepository,
+        IQueryRepository<BusStops> busStopsQueryRepository,
         ICommandRepository<Schedule> scheduleCommandRepository,
         ICommandRepository<ScheduleRules> rulesCommandRepository,
         GeneralHelpers generalHelpers)
@@ -32,6 +36,8 @@ public class ScheduleService : IScheduleService
         _rulesQueryRepository = rulesQueryRepository;
         _routQueryRepository = routQueryRepository;
         _busQueryRepository = busQueryRepository;
+        _routeStopQueryRepository = routeStopQueryRepository;
+        _busStopsQueryRepository = busStopsQueryRepository;
         _rulesCommandRepository = rulesCommandRepository;
         _scheduleCommandRepository = scheduleCommandRepository;
         _generalHelpers = generalHelpers;
@@ -251,21 +257,48 @@ public class ScheduleService : IScheduleService
         try
         {
             DateTime today = DateTime.UtcNow.Date;
-            var schedules = await _scheduleQueryRepository.GetAllByCriteriaAsync(nameof(Schedule.DateOfDeparture), today.ToString("yyyy-MM-dd"));
-            if (!schedules.Any())
+            var schedules = (await _scheduleQueryRepository.GetAllByCriteriaAsync(nameof(Schedule.DateOfDeparture), today.ToString("yyyy-MM-dd"))).ToList();
+            if (schedules.Count == 0)
             {
                 return ApiResponse<List<GetSchedulesForDayResponseDTO>>.Failure(
                     $"No schedules found for this day: {today}", 
                     StatusCodes.BadRequest);
             }
 
-            var responseDataList = schedules.Select(s => new GetSchedulesForDayResponseDTO
+            var responseDataList = new List<GetSchedulesForDayResponseDTO>();
+
+            foreach (var schedule in schedules)
             {
-                RouteId = s.RouteId,
-                ArrivalTime = s.ArrivalTime,
-                DepartureTime = s.DepartureTime,
-                Status = s.Status
-            }).ToList();
+                List<string> BusStopsList = new List<string>();
+
+                var route = await _routQueryRepository.FindByIdAsync(schedule.RouteId);
+                if (route == null)
+                    return ApiResponse<List<GetSchedulesForDayResponseDTO>>.Failure(ErrorMessages.ROUTE_NOT_FOUND,
+                        StatusCodes.BadRequest);
+                
+                //get busStops, append to response List
+                var routeStop = await _routeStopQueryRepository.GetAllByCriteriaAsync(nameof(RouteStops.RouteId) ,schedule.RouteId.ToString());
+                foreach (var stop in routeStop)
+                {
+                     var s = await _busStopsQueryRepository.FindByIdAsync(stop.BusStopId);
+                    if (s == null)
+                        return ApiResponse<List<GetSchedulesForDayResponseDTO>>.Failure("Cannot find Bus Stop", StatusCodes.BadRequest);
+
+                    BusStopsList.Add(s.Name);
+                }
+
+                var responseBuilder = new GetSchedulesForDayResponseDTO
+                {
+                    RouteId = schedule.RouteId,
+                    RouteName = route.RouteName,                    
+                    DepartureTime = schedule.DepartureTime,
+                    ArrivalTime = schedule.ArrivalTime,
+                    BusStops = BusStopsList,
+                    Status = schedule.Status
+                };
+
+                responseDataList.Add(responseBuilder);
+            }
 
             return ApiResponse<List<GetSchedulesForDayResponseDTO>>.Success(
                 "Schedules retrieved successfully", 

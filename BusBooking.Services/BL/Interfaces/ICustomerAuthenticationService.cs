@@ -8,7 +8,7 @@ public interface ICustomerAuthenticationService
 {
     Task<ApiResponse<CustomerRegisterResponseDTO>> CustomerRegisterTask(CustomerRegisterRequestDTO registerRequest);
     Task<ApiResponse<CustomerLoginResponseDTO>> CustomerLoginTask(CustomerLoginRequestDTO loginRequest);
-    Task<ApiResponse> CustomerLogOut(CustomerLogOutRequestDTO request);
+    
     Task<ApiResponse<EditCustomerDetailsResponseDTO>> EditCustomerInformation(EditCustomerDetailsRequestDTO request);
     Task<ApiResponse> CustomerEmailVerification(EmailVerificationRequestDTO request);
 }

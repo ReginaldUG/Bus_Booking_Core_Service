@@ -22,5 +22,7 @@ public static class BusBookingServiceInjection
         services.AddScoped<AuthenticationHelper>();
         services.AddScoped<EmailHelper>();
         services.AddScoped<GeneralHelpers>();
+        services.AddScoped<IJwtService, JwtService>();
+        services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
     }
 }

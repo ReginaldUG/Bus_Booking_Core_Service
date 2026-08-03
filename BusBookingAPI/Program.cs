@@ -1,13 +1,38 @@
+using System.Text;
 using BusBooking.Data;
 using BusBooking.Services;
 using BusBookingAPI.Helpers;
 using Dapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
 SqlMapper.AddTypeHandler(new TimeOnlyTypeHandler());
 SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ClockSkew = TimeSpan.Zero,
+            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+            ValidAudience = builder.Configuration["JwtSettings:Audience"],
+            IssuerSigningKey =
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
+        };
+    });
 
 builder.Services.AddControllers();
 
@@ -16,7 +41,6 @@ builder.Services.AddDbContext<AppDbContext>(options=>
         builder.Configuration.GetConnectionString("DefaultConnection"),
         b=>b.MigrationsAssembly("BusBooking.Migrations")
     ));
-
 //  Registering Services
 builder.Services.AddDataInjections(builder.Configuration);
 builder.Services.AddServiceInjections(builder.Configuration);
@@ -60,6 +84,7 @@ if(!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

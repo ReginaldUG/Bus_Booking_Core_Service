@@ -11,6 +11,7 @@ namespace BusBooking.Services.BL.Implementations;
 
 public class BookingService : IBookingService
 {
+    private readonly IAuthenticatedUserService _currentUser;
     private readonly ICommandRepository<Booking> _bookingCommandRepository;
     
     private readonly ICommandRepository<Schedule> _scheduleCommandRepository;
@@ -26,6 +27,7 @@ public class BookingService : IBookingService
     private readonly ITokenService _tokenService;
     
     public BookingService(
+        IAuthenticatedUserService currentUser,
         IQueryRepository<Booking> bookingQueryRepository, 
         IQueryRepository<Schedule> scheduleQueryRepository,
         ICommandRepository<Booking> bookingCommandRepository, 
@@ -51,6 +53,7 @@ public class BookingService : IBookingService
         _busStopQueryRepository = busStopQueryRepository;
 
         _tokenService = tokenService;
+        _currentUser = currentUser;
     }
 
     //book a bus
@@ -58,15 +61,14 @@ public class BookingService : IBookingService
     {
         try
         {
-            var verify = await _tokenService.VerifyToken(request.Token);
-            if (!verify.Status)
+            int? authenticatedCustomerId = _currentUser.UserId;
+            if (authenticatedCustomerId == null)
                 return ApiResponse<BookScheduleResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
-                    StatusCodes.BadRequest);
-            int customerId = verify.Data.CustomerId;
+                    StatusCodes.Unauthorized);
 
             //Validation 1: Ensure customer and Schedule records exists
             //Validation 2: Ensure customer account is active
-            var customer = await _customerQueryRepository.FindByIdAsync(customerId);
+            var customer = await _customerQueryRepository.FindByIdAsync((int)authenticatedCustomerId);
             var schedule = await _scheduleQueryRepository.FindByIdAsync(request.ScheduleId);
 
             string v1 = customer == null ? "Customer not found" :
@@ -93,7 +95,7 @@ public class BookingService : IBookingService
             //Validation 6: Prevent booking duplicate slots for this customer on the same schedule ride
             var searchParam = new Dictionary<string, object>
             {
-                { nameof(Booking.CustomerId), customerId },
+                { nameof(Booking.CustomerId), customer.Id },
                 { nameof(Booking.ScheduleId), request.ScheduleId }
             };
             var duplicateEntry = await _bookingQueryRepository.FindByMultipleFieldsAsync(searchParam, null);
@@ -101,7 +103,7 @@ public class BookingService : IBookingService
                 return ApiResponse<BookScheduleResponseDTO>.Failure("Customer already has a booking for this schedule", StatusCodes.BadRequest);
             
             //Validation 7: Ensure customer wallet has enough to pay for schedule
-            var cWallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId), customerId.ToString());
+            var cWallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId), customer.Id.ToString());
             string cm = cWallet == null ? "Customer Wallet not found" :
                 cWallet.Balance < schedule.Price ? "Insufficient Wallet Balance" : "good";
             if (cm != "good")
@@ -165,7 +167,7 @@ public class BookingService : IBookingService
                 //Add the new Booking entry
                 var booking = new Booking
                 {
-                    CustomerId = customerId,
+                    CustomerId = customer.Id,
                     ScheduleId = request.ScheduleId,
                     Price = schedule.Price,
                     PickUpStopId = request.PickUpStopId,
@@ -218,10 +220,9 @@ public class BookingService : IBookingService
         try
         {
             //check customer token and get customer ID
-            var verify = await _tokenService.VerifyToken(request.Token);            
-            if (!verify.Status)
+            int? authenticatedCustomerId = _currentUser.UserId;
+            if (authenticatedCustomerId == null)
                 return ApiResponse.Failure(ErrorMessages.INVALID_TOKEN);
-            int customerId = verify.Data.CustomerId;
 
             //verify booking exists, is assigned to customer, has not yet departed
             var booking = await _bookingQueryRepository.FindByCriteriaAsync(nameof(Booking.Id),request.BookingId.ToString());
@@ -236,13 +237,13 @@ public class BookingService : IBookingService
             scheduledDateTimeLocal = DateTime.SpecifyKind(scheduledDateTimeLocal, DateTimeKind.Local);
 
             string message = booking.Completed ? "Cannot cancel a completed booking" :
-                booking.CustomerId != customerId ? "Booking is not tied to customer" :
+                booking.CustomerId != authenticatedCustomerId ? "Booking is not tied to customer" :
                 bookingSchedule.Status != ScheduleStatus.Scheduled ? "Schedule not valid to cancel" :
                 DateTime.Now.AddMinutes(5) > scheduledDateTimeLocal ? "Cancellation period has elapsed" : "null";
             if (message != "null")
                 return ApiResponse.Failure(message);
             
-            var wallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId),customerId.ToString());
+            var wallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId),authenticatedCustomerId.ToString());
             if (wallet == null)
                 return ApiResponse.Failure("Wallet not found");
             

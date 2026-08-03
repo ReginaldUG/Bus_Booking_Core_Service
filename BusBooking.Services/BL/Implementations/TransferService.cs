@@ -12,6 +12,7 @@ namespace BusBooking.Services.BL.Implementations;
 
 public class TransferService : ITransferService
 {
+    private readonly IAuthenticatedUserService _currentUser;
     //mock replica of topping up customer wallet with money
     private readonly IQueryRepository<Customer> _customerQueryRepository;
     private readonly IQueryRepository<CustomerWallet> _walletQueryRepository;
@@ -22,13 +23,14 @@ public class TransferService : ITransferService
     public TransferService (
         IQueryRepository<Customer> customerQueryRepository,  ITokenService tokenService,
         IQueryRepository<CustomerWallet> walletQueryRepository, 
-        ICommandRepository<CustomerWallet> waleltCommandRepository, 
+        ICommandRepository<CustomerWallet> waleltCommandRepository,  IAuthenticatedUserService currentUser,
         ICommandRepository<CustomerWalletTransactions> txWalletCommandRepository)
     {
         _customerQueryRepository = customerQueryRepository;
         _walletQueryRepository = walletQueryRepository;
         _walletCommandRepository = waleltCommandRepository;
         _txWalletCommandRepository = txWalletCommandRepository;
+        _currentUser = currentUser;
         _tokenService = tokenService;
     }
 
@@ -36,14 +38,12 @@ public class TransferService : ITransferService
     {
         try
         {
-            var verify = await _tokenService.VerifyToken(request.Token);
-            if (!verify.Status)
-                return ApiResponse<EditCustomerDetailsResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
-                    StatusCodes.BadRequest);
-            int customerId = verify.Data.CustomerId;
+            int? authenticatedCustomerId = _currentUser.UserId;
+            if (authenticatedCustomerId == null)
+                return ApiResponse.Failure(ErrorMessages.INVALID_TOKEN);
 
             //validate customer exist
-            var customer = await _customerQueryRepository.FindByIdAsync(customerId);
+            var customer = await _customerQueryRepository.FindByIdAsync((int)authenticatedCustomerId);
             if (customer == null)
                 return ApiResponse.Failure(ErrorMessages.INVALID_CREDENTIALS);
             
@@ -60,7 +60,7 @@ public class TransferService : ITransferService
             try
             {
                 //update customer wallet
-                var wallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId), customerId.ToString());
+                var wallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId), authenticatedCustomerId.ToString());
                 if (wallet == null)
                     return ApiResponse.Failure("No wallet assigned to Customer");
 
@@ -98,18 +98,25 @@ public class TransferService : ITransferService
         }
     }
 
-    public async Task<ApiResponse<CheckWalletBalanceResponseDTO>> CheckWalletBalance (CheckWalletBalanceRequestDTO request)
+    public async Task<ApiResponse<CheckWalletBalanceResponseDTO>> CheckWalletBalance ()
     {
         try
         {
-            var verify = await _tokenService.VerifyToken(request.Token);
+            int? authenticatedCustomerId = _currentUser.UserId;
+            if (authenticatedCustomerId == null)
+                return ApiResponse<CheckWalletBalanceResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
+                    StatusCodes.Unauthorized);
+            
+
+            /*var verify = await _tokenService.VerifyToken(request.Token);
             if (!verify.Status)
                 return ApiResponse<CheckWalletBalanceResponseDTO>.Failure(ErrorMessages.INVALID_TOKEN,
                     StatusCodes.BadRequest);
             int customerId = verify.Data.CustomerId;
+            */
 
             //get customer data
-            var customerWallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId), customerId.ToString());
+            var customerWallet = await _walletQueryRepository.FindByCriteriaAsync(nameof(CustomerWallet.CustomerId), authenticatedCustomerId.ToString());
             if (customerWallet == null)
                 return ApiResponse<CheckWalletBalanceResponseDTO>.Failure("Invalid Customer Id",
                     StatusCodes.BadRequest);

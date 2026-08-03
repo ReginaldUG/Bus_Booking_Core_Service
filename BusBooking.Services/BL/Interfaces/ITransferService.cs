@@ -7,5 +7,5 @@ namespace BusBooking.Services.BL.Interfaces;
 public interface ITransferService
 {
     Task<ApiResponse> CustomerWalletTopUp(CustomerWalletTopUpRequestDTO request);
-    Task<ApiResponse<CheckWalletBalanceResponseDTO>> CheckWalletBalance(CheckWalletBalanceRequestDTO request);
+    Task<ApiResponse<CheckWalletBalanceResponseDTO>> CheckWalletBalance();
 }

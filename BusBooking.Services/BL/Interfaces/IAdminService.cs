@@ -9,4 +9,5 @@ public interface IAdminService
     Task<ApiResponse<List<CustomerListResponseDTO>>> ListCustomers();
     Task<ApiResponse<CustomerInfoResponseDTO>> GetCustomerInfo(CustomerInfoRequestDTO request);
     Task<ApiResponse> AssignBusToDriver(AssignBusToDriverRequestDTO request);
+    Task<ApiResponse<GetRouteBusStopsResponseDTO>> GetRouteBusStopsInfo(GetRouteBusStopsRequestDTO request);
 }

@@ -1,6 +1,7 @@
 using BusBooking.Models.DTO.RequestDTOs;
 using BusBooking.Services.BL.Interfaces;
 using BusBookingAPI.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BusBookingAPI.Controllers;
@@ -16,6 +17,7 @@ public class BookingController : Controller
         _bookingService = bookingService;
     }
 
+    [Authorize]
     [HttpPost("create_booking")]
     public async Task<IActionResult> CreateBooking([FromBody] BookScheduleRequestDTO request)
     {
@@ -37,6 +39,7 @@ public class BookingController : Controller
         return HttpResponseHelper.GetHttpResponse(response);
     }
 
+    [Authorize]
     [HttpPut("cancel_booking")]
     public async Task<IActionResult> CancelCustomerBooking([FromBody] CancelCustomerBookingRequestDTO request)
     {
