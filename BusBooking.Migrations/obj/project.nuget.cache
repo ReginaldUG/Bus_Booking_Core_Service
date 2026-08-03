@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "KJuJGorCC7E=",
+  "dgSpecHash": "iPqv1cn/yyY=",
   "success": true,
-  "projectFilePath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Migrations\\BusBooking.Migrations.csproj",
+  "projectFilePath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Migrations\\BusBooking.Migrations.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\regi4\\.nuget\\packages\\dapper\\2.1.79\\dapper.2.1.79.nupkg.sha512",
     "C:\\Users\\regi4\\.nuget\\packages\\efcore.namingconventions\\10.0.1\\efcore.namingconventions.10.0.1.nupkg.sha512",

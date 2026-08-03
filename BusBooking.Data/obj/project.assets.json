@@ -798,11 +798,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj",
+      "projectUniqueName": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj",
       "projectName": "BusBooking.Data",
-      "projectPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj",
+      "projectPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\BusBooking.Data.csproj",
       "packagesPath": "C:\\Users\\regi4\\.nuget\\packages\\",
-      "outputPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\obj\\",
+      "outputPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Data\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -824,8 +824,8 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Models\\BusBooking.Models.csproj": {
-              "projectPath": "c:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Models\\BusBooking.Models.csproj"
+            "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Models\\BusBooking.Models.csproj": {
+              "projectPath": "C:\\Dev\\C#\\Bus_Booking_Core_Service\\BusBooking.Models\\BusBooking.Models.csproj"
             }
           }
         }
